@@ -111,9 +111,10 @@ const EM=["😂","❤️","👍","🔥","😮","😢","👏","🤣","💀","🎉
 const AV={charlie:`<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="#caa6ff"/><circle cx="50" cy="42" r="22" fill="#ffd9b0"/><path d="M28 40q22-26 44 0q-6-8-22-8t-22 8z" fill="#2b2d42"/><circle cx="42" cy="44" r="3" fill="#111"/><circle cx="58" cy="44" r="3" fill="#111"/><path d="M42 54q8 6 16 0" stroke="#111" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M14 100q36-44 72 0z" fill="#6c5ce7"/></svg>`,skull:`<img src="img/1.png" style="width:100%;height:100%;object-fit:cover;display:block" alt="">`};
 const NAME={charlie:"צ’ארלי",skull:"גולגולת"};
 const LOGO=`<img src="img/1.png" style="width:100%;height:100%;object-fit:cover;display:block" alt="">`;
-const API="https://harry335.pythonanywhere.com"; // כתובת השרת ב-PythonAnywhere
-const CLIENT_ID="908669720823-djgpsa2nugjqpicltbjlpvg94eu460u1.apps.googleusercontent.com"; // מזהה לקוח של גוגל
+const API="https://USERNAME.pythonanywhere.com"; // כתובת השרת ב-PythonAnywhere
+const CLIENT_ID="YOUR_CLIENT_ID.apps.googleusercontent.com"; // מזהה לקוח של גוגל
 let S={msgs:[],users:0,ad:"",me:null,admin:false,cred:null},last="";
+const isAdm=()=>S.admin;
 try{S.cred=localStorage.getItem("cc")}catch(e){}
 const toast=t=>{const e=$("toast");e.textContent=t;e.style.display="block";setTimeout(()=>e.style.display="none",2200)};
 async function api(p,m,b){const h={};if(b)h["Content-Type"]="application/json";if(S.cred)h.Authorization="Bearer "+S.cred;
