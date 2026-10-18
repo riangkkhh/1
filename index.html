@@ -119,7 +119,7 @@ const toast=t=>{const e=$("toast");e.textContent=t;e.style.display="block";setTi
 function clean(h){const d=new DOMParser().parseFromString(h,"text/html");d.querySelectorAll("script,iframe,object,embed,link,meta,base,form,style").forEach(n=>n.remove());d.querySelectorAll("*").forEach(n=>[...n.attributes].forEach(a=>{if(/^on/i.test(a.name)||/^\s*javascript:/i.test(a.value))n.removeAttribute(a.name)}));return d.body.innerHTML}
 const openM=h=>{$("lc").innerHTML=h;$("ov").classList.add("on")},closeM=()=>$("ov").classList.remove("on");
 $("ov").onclick=e=>{if(e.target.id==="ov")closeM()};
-const CLIENT_ID="YOUR_CLIENT_ID.apps.googleusercontent.com"; // מזהה לקוח מ-Google Cloud Console
+const CLIENT_ID="908669720823-djgpsa2nugjqpicltbjlpvg94eu460u1.apps.googleusercontent.com"; // מזהה לקוח מ-Google Cloud Console
 function jwt(t){try{return JSON.parse(decodeURIComponent(escape(atob(t.split(".")[1].replace(/-/g,"+").replace(/_/g,"/")))))}catch(e){return null}}
 function okTok(p){return !!p&&p.email_verified&&p.aud===CLIENT_ID&&/accounts\.google\.com$/.test(p.iss)&&p.exp*1000>Date.now()}
 function onCred(r){const p=jwt(r.credential);if(!okTok(p))return toast("ההתחברות נכשלה");S.me=p.email.toLowerCase();S.cred=r.credential;if(!S.users.includes(S.me))S.users.push(S.me);sv();closeM();render(1)}
