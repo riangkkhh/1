@@ -131,13 +131,16 @@ if(first&&location.hash){const t=document.querySelector(location.hash);t&&t.scro
 async function poll(){if(!ready)return load(true);if(S.cred&&expired()){dropCred();return reload()}const v=await api("/api/ver");if(!v.ok)return;
 if(v.j.mv!==mv)return reload();
 if(v.j.rv!==rv){const r=await api("/api/reactions?ids="+S.msgs.map(m=>m.id).join(","));if(r.ok){rv=v.j.rv;S.msgs.forEach(m=>{m.r=r.j[m.id]||{};const f=$("f"+m.id);if(f)fillFoot(f,m)})}}}
+async function diag(){const o=$("dgo");o.textContent="בודק...\n";const t=[["GET /api/ver","/api/ver"],["GET /api/feed?limit=1","/api/feed?limit=1"],["GET /api/feed?limit=20","/api/feed?limit=20"],["POST /api/login","/api/login","POST"]];
+for(const [n,u,m] of t){try{const r=await fetch(API+u,{method:m||"GET"});o.textContent+=n+" -> "+r.status+"\n"}catch(e){o.textContent+=n+" -> נחסם (לא הגיעה תשובה)\n"}}}
 async function older(){const r=await api("/api/feed?limit="+PAGE+"&before="+S.msgs[0].id);if(r.ok){S.msgs=r.j.msgs.concat(S.msgs);S.more=r.j.more;render(1)}}
 function clean(h){const d=new DOMParser().parseFromString(h,"text/html");d.querySelectorAll("script,iframe,object,embed,link,meta,base,form,style").forEach(n=>n.remove());d.querySelectorAll("*").forEach(n=>[...n.attributes].forEach(a=>{if(/^on/i.test(a.name)||/^\s*javascript:/i.test(a.value))n.removeAttribute(a.name)}));return d.body.innerHTML}
 const openM=h=>{$("lc").innerHTML=h;$("ov").classList.add("on")},closeM=()=>$("ov").classList.remove("on");
 $("ov").onclick=e=>{if(e.target.id==="ov")closeM()};
 async function onCred(r){S.cred=r.credential;try{localStorage.setItem("cc",S.cred)}catch(e){}const x=await api("/api/login","POST");if(!x.ok){S.cred=null;try{localStorage.removeItem("cc")}catch(e){}return toast("ההתחברות נכשלה")}closeM();reload()}
 function loginM(msg){openM(`<button class="x" id="xx">✕</button><div class="av">${LOGO}</div><h3>${msg||"התחברו כדי להמשיך"}</h3><p>התחברות עם חשבון Google פותחת תמונות, סרטונים, תגובות ושיתוף</p><div id="gb" style="display:flex;justify-content:center;min-height:44px"></div>`);
-$("xx").onclick=closeM;if(window.google&&google.accounts){google.accounts.id.initialize({client_id:CLIENT_ID,callback:onCred});google.accounts.id.renderButton($("gb"),{theme:"outline",size:"large",locale:"he",width:240})}else $("gb").textContent="טוען..."}
+$("xx").onclick=closeM;if(gsi()){google.accounts.id.renderButton($("gb"),{theme:"outline",size:"large",locale:"he",width:240})}else $("gb").textContent="טוען..."}
+let gInit=false;function gsi(){if(!gInit&&window.google&&google.accounts){google.accounts.id.initialize({client_id:CLIENT_ID,callback:onCred,auto_select:true});gInit=true}return gInit}
 function logout(){S.cred=null;try{localStorage.removeItem("cc")}catch(e){}try{google.accounts.id.disableAutoSelect()}catch(e){}reload()}
 function head(){$("cnt").textContent=S.users;document.body.classList.toggle("adm",S.admin);
 $("lg").innerHTML=S.me?`${ic("out")} התנתק`:`${ic("user")} התחבר`;$("lg").onclick=()=>{if(S.me)logout();else loginM()};
@@ -148,7 +151,7 @@ async function react(id,e){if(!S.me)return loginM("התחברו כדי להגי�
 function fillFoot(f,m){f.innerHTML=EM.filter(e=>m.r&&m.r[e]).map(e=>`<button class="rx ${m.r[e].me?"me":""}" data-e="${e}">${e}<b>${m.r[e].n}</b></button>`).join("")+`<button class="addr" title="הוסף תגובה">${ic("smile")}</button>`;
 f.querySelectorAll(".rx").forEach(x=>x.onclick=()=>react(m.id,x.dataset.e));
 f.querySelector(".addr").onclick=ev=>{ev.stopPropagation();if(!S.me)return loginM("התחברו כדי להגיב");const p=$("pk");p.innerHTML="";EM.forEach(e=>{const x=document.createElement("button");x.textContent=e;x.onclick=()=>{p.classList.remove("on");react(m.id,e)};p.appendChild(x)});const r=ev.currentTarget.getBoundingClientRect();p.classList.add("on");p.style.top=Math.max(90,r.top-p.offsetHeight-8)+"px";p.style.left=Math.max(8,Math.min(r.right-p.offsetWidth,innerWidth-p.offsetWidth-8))+"px"}}
-function render(keep){head();const f=$("feed");if(S.err){f.innerHTML=`<div class="empty">${S.err}<br><br><button class="gb" id="rt" style="width:auto;display:inline-flex;padding:8px 18px">נסה שוב</button></div>`;$("rt").onclick=()=>load(true);return}if(!S.msgs.length){f.innerHTML='<div class="empty">אין הודעות עדיין</div>';return}f.innerHTML="";
+function render(keep){head();const f=$("feed");if(S.err){f.innerHTML=`<div class="empty">${S.err}<br><br><button class="gb" id="rt" style="width:auto;display:inline-flex;padding:8px 18px">נסה שוב</button> <button class="gb" id="dg" style="width:auto;display:inline-flex;padding:8px 18px">בדיקת חיבור</button><pre id="dgo" style="direction:ltr;text-align:left;margin-top:14px;font-size:13px;white-space:pre-wrap"></pre></div>`;$("rt").onclick=()=>load(true);$("dg").onclick=diag;return}if(!S.msgs.length){f.innerHTML='<div class="empty">אין הודעות עדיין</div>';return}f.innerHTML="";
 if(S.more){const o=document.createElement("button");o.className="gb";o.style.cssText="align-self:center;width:auto;padding:8px 18px";o.textContent="טען הודעות ישנות";o.onclick=older;f.appendChild(o)}
 S.msgs.forEach(m=>{const d=document.createElement("div");d.className="row";d.id="m"+m.id;let b=clean(m.h);
 b=b.replace(/<!--m-->/g,'<div class="lock">'+ic("lock")+'התחברו עם Google כדי לראות תמונות וסרטונים</div>');
@@ -184,5 +187,5 @@ $("aed").onclick=()=>{openM(`<button class="x" id="xx">✕</button><h3>עריכ�
 $("th").onclick=()=>{const r=document.documentElement;r.dataset.theme=(r.dataset.theme||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light"))==="dark"?"light":"dark"};
 setInterval(()=>{if(!S.me&&!$("ov").classList.contains("on"))loginM("כדאי להתחבר")},60000);
 head();load(true);setInterval(poll,8000);
-addEventListener("load",()=>{if(window.google&&google.accounts)google.accounts.id.initialize({client_id:CLIENT_ID,callback:onCred,auto_select:true})});
+addEventListener("load",gsi);
 </script></body></html>
