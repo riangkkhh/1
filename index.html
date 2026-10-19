@@ -113,39 +113,50 @@ const NAME={charlie:"צ’ארלי",skull:"גולגולת"};
 const LOGO=`<img src="img/1.png" style="width:100%;height:100%;object-fit:cover;display:block" alt="">`;
 const API="https://harry335.pythonanywhere.com"; // כתובת השרת ב-PythonAnywhere
 const CLIENT_ID="908669720823-djgpsa2nugjqpicltbjlpvg94eu460u1.apps.googleusercontent.com"; // מזהה לקוח של גוגל
-let S={msgs:[],users:0,ad:"",me:null,admin:false,cred:null},last="";
+let S={msgs:[],users:0,ad:"",me:null,admin:false,cred:null};
 const isAdm=()=>S.admin;
 try{S.cred=localStorage.getItem("cc")}catch(e){}
 const toast=t=>{const e=$("toast");e.textContent=t;e.style.display="block";setTimeout(()=>e.style.display="none",2200)};
 async function api(p,m,b){const h={};if(b)h["Content-Type"]="application/json";if(S.cred)h.Authorization="Bearer "+S.cred;
 try{const r=await fetch(API+p,{method:m||"GET",headers:h,body:b?JSON.stringify(b):undefined});return{ok:r.ok,s:r.status,j:await r.json().catch(()=>({}))}}catch(e){return{ok:false,s:0,j:{}}}}
-async function load(first){const r=await api("/api/feed");if(!r.ok){if(first){toast("אין חיבור לשרת - בדוק את כתובת API");render(1)}return}const j=r.j;
-if(S.cred&&!j.me){S.cred=null;try{localStorage.removeItem("cc")}catch(e){}try{google.accounts.id.prompt()}catch(e){}}
-const k=JSON.stringify(j);if(k===last&&!first)return;last=k;S.msgs=j.msgs;S.ad=j.ad;S.users=j.users;S.me=j.me;S.admin=!!j.admin;render(!first);
+let mv="",rv="";const PAGE=20;
+const reload=()=>load(false);
+function expired(){try{return JSON.parse(atob(S.cred.split(".")[1].replace(/-/g,"+").replace(/_/g,"/"))).exp*1000<Date.now()}catch(e){return true}}
+function dropCred(){S.cred=null;try{localStorage.removeItem("cc")}catch(e){}try{google.accounts.id.prompt()}catch(e){}}
+async function load(first){if(S.cred&&expired())dropCred();
+const r=await api("/api/feed?limit="+Math.min(Math.max(S.msgs.length,PAGE),200));
+if(!r.ok){if(first){toast("אין חיבור לשרת - בדוק את כתובת API");render(1)}return}const j=r.j;if(S.cred&&!j.me)dropCred();
+mv=j.mv;rv=j.rv;S.msgs=j.msgs;S.more=j.more;S.ad=j.ad;S.users=j.users;S.me=j.me;S.admin=!!j.admin;render(!first);
 if(first&&location.hash){const t=document.querySelector(location.hash);t&&t.scrollIntoView()}}
+async function poll(){if(S.cred&&expired()){dropCred();return reload()}const v=await api("/api/ver");if(!v.ok)return;
+if(v.j.mv!==mv)return reload();
+if(v.j.rv!==rv){const r=await api("/api/reactions?ids="+S.msgs.map(m=>m.id).join(","));if(r.ok){rv=v.j.rv;S.msgs.forEach(m=>{m.r=r.j[m.id]||{};const f=$("f"+m.id);if(f)fillFoot(f,m)})}}}
+async function older(){const r=await api("/api/feed?limit="+PAGE+"&before="+S.msgs[0].id);if(r.ok){S.msgs=r.j.msgs.concat(S.msgs);S.more=r.j.more;render(1)}}
 function clean(h){const d=new DOMParser().parseFromString(h,"text/html");d.querySelectorAll("script,iframe,object,embed,link,meta,base,form,style").forEach(n=>n.remove());d.querySelectorAll("*").forEach(n=>[...n.attributes].forEach(a=>{if(/^on/i.test(a.name)||/^\s*javascript:/i.test(a.value))n.removeAttribute(a.name)}));return d.body.innerHTML}
 const openM=h=>{$("lc").innerHTML=h;$("ov").classList.add("on")},closeM=()=>$("ov").classList.remove("on");
 $("ov").onclick=e=>{if(e.target.id==="ov")closeM()};
-async function onCred(r){S.cred=r.credential;try{localStorage.setItem("cc",S.cred)}catch(e){}const x=await api("/api/login","POST");if(!x.ok){S.cred=null;try{localStorage.removeItem("cc")}catch(e){}return toast("ההתחברות נכשלה")}closeM();last="";load()}
+async function onCred(r){S.cred=r.credential;try{localStorage.setItem("cc",S.cred)}catch(e){}const x=await api("/api/login","POST");if(!x.ok){S.cred=null;try{localStorage.removeItem("cc")}catch(e){}return toast("ההתחברות נכשלה")}closeM();reload()}
 function loginM(msg){openM(`<button class="x" id="xx">✕</button><div class="av">${LOGO}</div><h3>${msg||"התחברו כדי להמשיך"}</h3><p>התחברות עם חשבון Google פותחת תמונות, סרטונים, תגובות ושיתוף</p><div id="gb" style="display:flex;justify-content:center;min-height:44px"></div>`);
 $("xx").onclick=closeM;if(window.google&&google.accounts){google.accounts.id.initialize({client_id:CLIENT_ID,callback:onCred});google.accounts.id.renderButton($("gb"),{theme:"outline",size:"large",locale:"he",width:240})}else $("gb").textContent="טוען..."}
-function logout(){S.cred=null;try{localStorage.removeItem("cc")}catch(e){}try{google.accounts.id.disableAutoSelect()}catch(e){}last="";load()}
+function logout(){S.cred=null;try{localStorage.removeItem("cc")}catch(e){}try{google.accounts.id.disableAutoSelect()}catch(e){}reload()}
 function head(){$("cnt").textContent=S.users;document.body.classList.toggle("adm",S.admin);
 $("lg").innerHTML=S.me?`${ic("out")} התנתק`:`${ic("user")} התחבר`;$("lg").onclick=()=>{if(S.me)logout();else loginM()};
 $("adm").innerHTML=`${ic("mail")}<span>מנהל:</span> ${S.admin?S.me:"mont.b335@gmail.com"}`;$("th").innerHTML=ic("moon");
 $("adc").innerHTML=S.ad?clean(S.ad):'<div style="padding:30px 10px;text-align:center;color:var(--mu);font-size:13px">כאן יופיע מקום לפרסומת</div>';
 $("aed").style.display=S.admin?"block":"none";$("aed").innerHTML=`${ic("edit")} ערוך פרסומת`}
-async function react(id,e){if(!S.me)return loginM("התחברו כדי להגיב");const x=await api("/api/react","POST",{id,emoji:e});if(x.s===409)return toast("אפשר עד 2 אימוג׳ים שונים להודעה");if(!x.ok)return toast("שגיאה");load()}
+async function react(id,e){if(!S.me)return loginM("התחברו כדי להגיב");const x=await api("/api/react","POST",{id,emoji:e});if(x.s===409)return toast("אפשר עד 2 אימוג׳ים שונים להודעה");if(!x.ok)return toast("שגיאה");poll()}
+function fillFoot(f,m){f.innerHTML=EM.filter(e=>m.r&&m.r[e]).map(e=>`<button class="rx ${m.r[e].me?"me":""}" data-e="${e}">${e}<b>${m.r[e].n}</b></button>`).join("")+`<button class="addr" title="הוסף תגובה">${ic("smile")}</button>`;
+f.querySelectorAll(".rx").forEach(x=>x.onclick=()=>react(m.id,x.dataset.e));
+f.querySelector(".addr").onclick=ev=>{ev.stopPropagation();if(!S.me)return loginM("התחברו כדי להגיב");const p=$("pk");p.innerHTML="";EM.forEach(e=>{const x=document.createElement("button");x.textContent=e;x.onclick=()=>{p.classList.remove("on");react(m.id,e)};p.appendChild(x)});const r=ev.currentTarget.getBoundingClientRect();p.classList.add("on");p.style.top=Math.max(90,r.top-p.offsetHeight-8)+"px";p.style.left=Math.max(8,Math.min(r.right-p.offsetWidth,innerWidth-p.offsetWidth-8))+"px"}}
 function render(keep){head();const f=$("feed");if(!S.msgs.length){f.innerHTML='<div class="empty">אין הודעות עדיין</div>';return}f.innerHTML="";
+if(S.more){const o=document.createElement("button");o.className="gb";o.style.cssText="align-self:center;width:auto;padding:8px 18px";o.textContent="טען הודעות ישנות";o.onclick=older;f.appendChild(o)}
 S.msgs.forEach(m=>{const d=document.createElement("div");d.className="row";d.id="m"+m.id;let b=clean(m.h);
 b=b.replace(/<!--m-->/g,'<div class="lock">'+ic("lock")+'התחברו עם Google כדי לראות תמונות וסרטונים</div>');
-const rx=EM.filter(e=>m.r&&m.r[e]).map(e=>`<button class="rx ${m.r[e].me?"me":""}" data-e="${e}">${e}<b>${m.r[e].n}</b></button>`).join("");
-d.innerHTML=`<div class="mav">${AV[m.w]}</div><div class="col"><div class="meta"><b>${NAME[m.w]}</b><span>${new Date(m.t).toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"})}</span></div><div class="bw"><div class="ta"><button class="lk" title="העתק קישור">${ic("link")}</button><button class="sh" title="צילום מסך">${ic("cam")}</button>${isAdm()?`<button class="dl" title="מחק">${ic("trash")}</button>`:""}</div><div class="bub">${b}</div></div><div class="foot">${rx}<button class="addr" title="הוסף תגובה">${ic("smile")}</button></div></div>`;
-d.querySelectorAll(".rx").forEach(x=>x.onclick=()=>react(m.id,x.dataset.e));
-d.querySelector(".addr").onclick=ev=>{ev.stopPropagation();if(!S.me)return loginM("התחברו כדי להגיב");const p=$("pk");p.innerHTML="";EM.forEach(e=>{const x=document.createElement("button");x.textContent=e;x.onclick=()=>{p.classList.remove("on");react(m.id,e)};p.appendChild(x)});const r=ev.currentTarget.getBoundingClientRect();p.classList.add("on");p.style.top=Math.max(90,r.top-p.offsetHeight-8)+"px";p.style.left=Math.max(8,Math.min(r.right-p.offsetWidth,innerWidth-p.offsetWidth-8))+"px"};
+d.innerHTML=`<div class="mav">${AV[m.w]}</div><div class="col"><div class="meta"><b>${NAME[m.w]}</b><span>${new Date(m.t).toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"})}</span></div><div class="bw"><div class="ta"><button class="lk" title="העתק קישור">${ic("link")}</button><button class="sh" title="צילום מסך">${ic("cam")}</button>${isAdm()?`<button class="dl" title="מחק">${ic("trash")}</button>`:""}</div><div class="bub">${b}</div></div><div class="foot" id="f${m.id}"></div></div>`;
+fillFoot(d.querySelector(".foot"),m);
 d.querySelector(".lk").onclick=()=>{const u=location.href.split("#")[0]+"#m"+m.id;(navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast("הקישור הועתק"),()=>{history.replaceState(0,"","#m"+m.id);toast("הקישור בשורת הכתובת")})};
 d.querySelector(".sh").onclick=async()=>{if(!S.me)return loginM("צילום מסך זמין למחוברים בלבד");if(!window.html2canvas)return toast("לא זמין כרגע");const c=await html2canvas(d.querySelector(".bub"),{backgroundColor:null});const a=document.createElement("a");a.href=c.toDataURL();a.download="post-"+m.id+".png";a.click()};
-const dl=d.querySelector(".dl");if(dl)dl.onclick=async()=>{if(!confirm("למחוק את ההודעה?"))return;await api("/api/message/"+m.id,"DELETE");last="";load()};
+const dl=d.querySelector(".dl");if(dl)dl.onclick=async()=>{if(!confirm("למחוק את ההודעה?"))return;await api("/api/message/"+m.id,"DELETE");reload()};
 f.appendChild(d)});if(!keep)scrollTo(0,document.body.scrollHeight)}
 document.addEventListener("click",e=>{if(!e.target.closest("#pk"))$("pk").classList.remove("on")});
 const ed=$("ed");let hm=false;
@@ -157,14 +168,21 @@ $("col").oninput=e=>document.execCommand("foreColor",false,e.target.value);
 $("lk").onclick=()=>{const u=prompt("כתובת קישור:");if(u)document.execCommand("createLink",false,u)};
 $("cd").onclick=()=>document.execCommand("insertHTML",false,'<code>קוד</code>&nbsp;');
 $("em").onclick=()=>{const u=prompt("קישור ישיר לתמונה או לסרטון:");if(u)document.execCommand("insertHTML",false,/\.(mp4|webm|mov)(\?|$)/i.test(u)?`<video controls src="${u}"></video>`:`<img src="${u}">`)};
-function pick(t){const f=$("fi");f.accept=t+"/*";f.onchange=()=>{const x=f.files[0];if(!x)return;const r=new FileReader();r.onload=()=>{ed.focus();document.execCommand("insertHTML",false,t==="image"?`<img src="${r.result}">`:`<video controls src="${r.result}"></video>`)};r.readAsDataURL(x);f.value=""};f.click()}
+function shrink(file){return new Promise((ok,no)=>{const u=URL.createObjectURL(file),im=new Image();im.onerror=()=>no();im.onload=()=>{let s=Math.min(1,1280/Math.max(im.width,im.height)),q=.8,out;const c=document.createElement("canvas");
+for(let i=0;i<6;i++){c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);out=c.toDataURL("image/jpeg",q);if(out.length<300000)break;q-=.1;s*=.85}URL.revokeObjectURL(u);ok(out)};im.src=u})}
+function pick(t){const f=$("fi");f.accept=t+"/*";f.onchange=async()=>{const x=f.files[0];f.value="";if(!x)return;
+if(t==="image"){toast("מכווץ תמונה...");try{const d=await shrink(x);ed.focus();document.execCommand("insertHTML",false,`<img src="${d}">`)}catch(e){toast("התמונה לא נתמכת")}return}
+if(x.size>3.5*1024*1024)return toast("הסרטון גדול מדי (עד 3.5MB). אפשר להטמיע קישור ישיר");
+const r=new FileReader();r.onload=()=>{ed.focus();document.execCommand("insertHTML",false,`<video controls src="${r.result}"></video>`)};r.readAsDataURL(x)};f.click()}
 $("im").onclick=()=>pick("image");$("vd").onclick=()=>pick("video");
 $("md").onclick=()=>{hm=!hm;$("md").classList.toggle("on",hm);if(hm){$("ht").value=ed.innerHTML;$("ht").style.display="block";ed.style.display="none"}else{ed.innerHTML=clean($("ht").value);$("ht").style.display="none";ed.style.display="block"}};
-$("sd").onclick=async()=>{if(!S.admin)return;const h=clean(hm?$("ht").value:ed.innerHTML);if(!h.replace(/<[^>]*>|&nbsp;|\s/g,"")&&!/<(img|video)/.test(h))return toast("ההודעה ריקה");
-const x=await api("/api/message","POST",{who:$("who").value,html:h});if(!x.ok)return toast(x.s===413?"הקובץ גדול מדי":"שגיאה בשליחה");ed.innerHTML="";$("ht").value="";last="";await load();scrollTo(0,document.body.scrollHeight)};
-$("aed").onclick=()=>{openM(`<button class="x" id="xx">✕</button><h3>עריכת פרסומת</h3><p>HTML או טקסט</p><textarea id="at" rows="6"></textarea><button class="gb" id="as">שמור</button>`);$("at").value=S.ad;$("xx").onclick=closeM;$("as").onclick=async()=>{const x=await api("/api/ad","POST",{html:$("at").value});if(x.ok){closeM();last="";load()}else toast("שגיאה")}};
+$("sd").onclick=async()=>{if(!S.admin||$("sd").disabled)return;const h=clean(hm?$("ht").value:ed.innerHTML);if(!h.replace(/<[^>]*>|&nbsp;|\s/g,"")&&!/<(img|video)/.test(h))return toast("ההודעה ריקה");
+$("sd").disabled=true;toast("שולח...");const x=await api("/api/message","POST",{who:$("who").value,html:h});$("sd").disabled=false;
+if(!x.ok)return toast(x.j.error==="bad_media"?"תמונה/סרטון גדול מדי או בפורמט לא נתמך":x.s===413?"הקובץ גדול מדי":"שגיאה בשליחה");
+ed.innerHTML="";$("ht").value="";await reload();scrollTo(0,document.body.scrollHeight)};
+$("aed").onclick=()=>{openM(`<button class="x" id="xx">✕</button><h3>עריכת פרסומת</h3><p>HTML או טקסט</p><textarea id="at" rows="6"></textarea><button class="gb" id="as">שמור</button>`);$("at").value=S.ad;$("xx").onclick=closeM;$("as").onclick=async()=>{const x=await api("/api/ad","POST",{html:$("at").value});if(x.ok){closeM();reload()}else toast("שגיאה")}};
 $("th").onclick=()=>{const r=document.documentElement;r.dataset.theme=(r.dataset.theme||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light"))==="dark"?"light":"dark"};
 setInterval(()=>{if(!S.me&&!$("ov").classList.contains("on"))loginM("כדאי להתחבר")},60000);
-head();load(true);setInterval(()=>load(),8000);
+head();load(true);setInterval(poll,8000);
 addEventListener("load",()=>{if(window.google&&google.accounts)google.accounts.id.initialize({client_id:CLIENT_ID,callback:onCred,auto_select:true})});
 </script></body></html>
