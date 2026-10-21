@@ -92,6 +92,7 @@ body.adm #cb{display:block}@media(max-width:900px){#cb{left:0}}
 .cx{display:none;align-items:center;gap:8px;margin:10px 14px 0;padding:8px 12px;border-radius:12px;background:var(--acs);border-right:3px solid var(--ac);font-size:13px}
 .cx.on{display:flex}.cx b{color:var(--ac);white-space:nowrap}.cx span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--mu)}
 .cx button{color:var(--mu);width:26px;height:26px;border-radius:8px;font-size:14px}.cx button:hover{background:var(--card);color:var(--tx)}
+.tabs{display:flex;gap:6px;margin:6px 0 14px}.tabs button{flex:1;padding:8px;border-radius:10px;background:var(--bub);font-weight:700;font-size:13px;color:var(--mu)}.tabs button.on{background:var(--ac);color:#fff}
 </style></head><body>
 <header>
 <img class="hav" src="img/1.png" alt="" style="object-fit:cover">
@@ -134,14 +135,14 @@ try{S.cred=localStorage.getItem("cc")}catch(e){}
 const toast=t=>{const e=$("toast");e.textContent=t;e.style.display="block";setTimeout(()=>e.style.display="none",2200)};
 async function api(p,m,b){const [path,qs]=p.split("?"),body=Object.assign({},b||{});if(qs)new URLSearchParams(qs).forEach((v,k)=>body[k]=v);if(S.cred)body._t=S.cred;
 try{const r=await fetch(API+(m==="DELETE"?path+"/delete":path),{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body)});return{ok:r.ok,s:r.status,j:await r.json().catch(()=>({}))}}catch(e){return{ok:false,s:0,j:{},err:String(e)}}}
-let mv="",rv="",ready=false;const PAGE=20;
+let mv="",rv="",ready=false,adv=null;const PAGE=20;
 const reload=()=>load(false);
 function expired(){try{return JSON.parse(atob(S.cred.split(".")[1].replace(/-/g,"+").replace(/_/g,"/"))).exp*1000<Date.now()}catch(e){return true}}
 function dropCred(){S.cred=null;try{localStorage.removeItem("cc")}catch(e){}try{google.accounts.id.prompt()}catch(e){}}
 async function load(first){if(S.cred&&expired())dropCred();
 const r=await api("/api/feed?limit="+Math.min(Math.max(S.msgs.length,PAGE),200));
 if(!r.ok){if(first||!ready){S.err=r.s?"שגיאת שרת ("+r.s+")":"אין תקשורת עם השרת. ייתכן שהוא חסום ברשת או בסינון שלך";render(1)}return}const j=r.j;ready=true;S.err=null;if(S.cred&&!j.me)dropCred();
-mv=j.mv;rv=j.rv;S.msgs=j.msgs;S.more=j.more;S.ad=j.ad;S.users=j.users;S.me=j.me;S.admin=!!j.admin;S.mod=!!j.mod;render(!first);
+if(j.adv!==adv){const a=await api("/api/adget");if(a.ok){S.ad=a.j.ad||"";adv=j.adv}}mv=j.mv;rv=j.rv;S.msgs=j.msgs;S.more=j.more;S.adEd=!!j.adeditor;S.users=j.users;S.me=j.me;S.admin=!!j.admin;S.mod=!!j.mod;render(!first);
 if(first&&location.hash){const t=document.querySelector(location.hash);t&&t.scrollIntoView()}}
 async function poll(){if(!ready)return load(true);if(S.cred&&expired()){dropCred();return reload()}const v=await api("/api/ver");if(!v.ok)return;
 if(v.j.mv!==mv)return reload();
@@ -164,7 +165,7 @@ function head(){$("cnt").textContent=S.users;document.body.classList.toggle("adm
 $("lg").innerHTML=S.me?`${ic("out")} התנתק`:`${ic("user")} התחבר`;$("lg").onclick=()=>{if(S.me)logout();else loginM()};
 $("adm").innerHTML=`${ic("mail")}<span>מנהל:</span> ${S.admin?S.me:"mont.b335@gmail.com"}`;$("th").innerHTML=ic("moon");
 showAd();
-$("aed").style.display=S.admin?"block":"none";$("aed").innerHTML=`${ic("edit")} ערוך פרסומת`}
+$("aed").style.display=S.adEd?"block":"none";$("aed").innerHTML=`${ic("edit")} ערוך פרסומת`}
 async function react(id,e){if(!S.me)return loginM("התחברו כדי להגיב");const x=await api("/api/react","POST",{id,emoji:e});if(x.s===409)return toast("אפשר עד 2 אימוג׳ים שונים להודעה");if(!x.ok)return toast("שגיאה");poll()}
 const LOCK=`<div class="lock">${ic("lock")}<div>לצפיה בתוכן יש להתחבר עם גוגל</div><button class="gb lockbtn" style="width:auto;display:inline-flex;margin-top:12px;padding:8px 18px">התחברות עם Google</button></div>`;
 function fillFoot(f,m){f.innerHTML=EM.filter(e=>m.r&&m.r[e]).map(e=>`<button class="rx ${m.r[e].me?"me":""}" data-e="${e}">${e}<b>${m.r[e].n}</b></button>`).join("")+`<button class="addr" title="הוסף תגובה">${ic("smile")}</button>`;
@@ -203,6 +204,14 @@ $("cd").onclick=()=>document.execCommand("insertHTML",false,'<code>קוד</code>
 $("em").onclick=()=>{const u=prompt("קישור ישיר לתמונה או לסרטון:");if(u)document.execCommand("insertHTML",false,/\.(mp4|webm|mov)(\?|$)/i.test(u)?`<video controls src="${u}"></video>`:`<img src="${u}">`)};
 function shrink(file){return new Promise((ok,no)=>{const u=URL.createObjectURL(file),im=new Image();im.onerror=()=>no();im.onload=()=>{let s=Math.min(1,1280/Math.max(im.width,im.height)),q=.8,out;const c=document.createElement("canvas");
 for(let i=0;i<6;i++){c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);out=c.toDataURL("image/jpeg",q);if(out.length<300000)break;q-=.1;s*=.85}URL.revokeObjectURL(u);ok(out)};im.src=u})}
+const rd=f=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=no;r.readAsDataURL(f)});
+async function prepAd(file){if(file.type==="image/gif"){if(file.size>1024*1024)throw new Error("הגיף גדול מדי (עד 1MB). אפשר לכווץ אותו באתר חיצוני");return rd(file)}
+const u=URL.createObjectURL(file);try{const im=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=()=>no(new Error("התמונה לא נתמכת"));i.src=u});
+let sc=Math.min(1,800/Math.max(im.width,im.height)),q=.85,out;const c=document.createElement("canvas");
+for(let k=0;k<7;k++){c.width=Math.max(1,Math.round(im.width*sc));c.height=Math.max(1,Math.round(im.height*sc));c.getContext("2d").drawImage(im,0,0,c.width,c.height);out=c.toDataURL("image/webp",q);if(out.length<350000)break;q=Math.max(.5,q-.1);sc*=.85}
+return out}finally{URL.revokeObjectURL(u)}}
+const adHtml=(src,link,bg)=>{const im=`<img src="${src}" alt="">`;bg=/^#[0-9a-f]{6}$/i.test(bg)?bg:"#0d0b24";
+return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;height:100%;background:${bg}}body{overflow:hidden}.f{display:flex;align-items:center;justify-content:center;width:100%;height:100%;padding:10px}img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;border-radius:12px}</style></head><body>${/^https?:\/\//i.test(link)?`<a class="f" href="${esc(link)}" target="_blank" rel="noopener">${im}</a>`:`<div class="f">${im}</div>`}</body></html>`};
 function pick(t){const f=$("fi");f.accept=t+"/*";f.onchange=async()=>{const x=f.files[0];f.value="";if(!x)return;
 if(t==="image"){toast("מכווץ תמונה...");try{const d=await shrink(x);ed.focus();document.execCommand("insertHTML",false,`<img src="${d}">`)}catch(e){toast("התמונה לא נתמכת")}return}
 if(x.size>3.5*1024*1024)return toast("הסרטון גדול מדי (עד 3.5MB). אפשר להטמיע קישור ישיר");
@@ -213,8 +222,19 @@ $("sd").onclick=async()=>{if(!(S.admin||S.mod)||$("sd").disabled)return;const h=
 $("sd").disabled=true;toast("שולח...");const x=eid?await api("/api/message/"+eid+"/edit","POST",{who:$("who").value,html:h}):await api("/api/message","POST",{who:$("who").value,html:h,quote_id:qt?qt.id:undefined});$("sd").disabled=false;
 if(!x.ok)return toast(x.j.error==="bad_media"?"תמונה/סרטון גדול מדי או בפורמט לא נתמך":x.j.error==="forbidden"?"אין הרשאה לפעולה הזו":x.s===413?"הקובץ גדול מדי":"שגיאה בשליחה");
 const was=!!eid;eid=null;qt=null;ctx();ed.innerHTML="";$("ht").value="";await reload();if(!was)scrollTo(0,document.body.scrollHeight)};
-$("aed").onclick=()=>{openM(`<button class="x" id="xx">✕</button><h3>עריכת פרסומת</h3><p>הדבק מסמך HTML מלא (עם עיצוב ואנימציות). הוא מוצג בתוך מסגרת מבודדת שלא יכולה לגעת באתר.</p><textarea id="at" rows="12" style="font-size:12px"></textarea><button class="gb" id="as">שמור</button>`);$("lc").style.maxWidth="620px";$("at").value=S.ad;$("xx").onclick=closeM;
-$("as").onclick=async()=>{const x=await api("/api/ad","POST",{html:$("at").value});if(x.ok){closeM();reload()}else toast("שגיאה")}};
+$("aed").onclick=()=>{openM(`<button class="x" id="xx">✕</button><h3>עריכת פרסומת</h3><div class="tabs"><button id="m1" class="on">תמונה / גיף</button><button id="m2">קוד HTML</button></div>
+<div id="p1"><input type="file" id="af" accept="image/*" hidden><button class="gb" id="ab">בחירת תמונה או גיף</button><div id="apv" style="margin:10px 0;font-size:12px;color:var(--mu)"></div><input id="al" placeholder="קישור בלחיצה על הפרסומת (לא חובה) https://..."><label style="font-size:13px;color:var(--mu)">צבע רקע <input type="color" id="abg" value="#0d0b24" style="width:56px;display:inline-block;margin:0 8px;padding:2px;height:32px"></label></div>
+<div id="p2" style="display:none"><textarea id="at" rows="10" style="font-size:12px" placeholder="הדבק מסמך HTML מלא"></textarea></div>
+<button class="gb" id="as" style="margin-top:12px">שמור</button><button class="gb" id="ar" style="margin-top:8px;background:transparent;color:#dc2626;border:0">הסרת הפרסומת</button>`);
+$("lc").style.maxWidth="520px";$("xx").onclick=closeM;let img=null,tab=1,loaded=false;
+const sw=n=>{tab=n;$("m1").classList.toggle("on",n===1);$("m2").classList.toggle("on",n===2);$("p1").style.display=n===1?"":"none";$("p2").style.display=n===2?"":"none";
+if(n===2&&!loaded){loaded=true;if(S.ad.length<200000)$("at").value=S.ad;else $("at").placeholder="הפרסומת הנוכחית היא תמונה (גדולה מכדי להציג כקוד)"}};
+$("m1").onclick=()=>sw(1);$("m2").onclick=()=>sw(2);$("ab").onclick=()=>$("af").click();
+$("af").onchange=async()=>{const f=$("af").files[0];$("af").value="";if(!f)return;$("apv").textContent="מעבד...";
+try{img=await prepAd(f);$("apv").innerHTML=`<img src="${img}" style="max-width:100%;max-height:150px;border-radius:10px;display:block;margin:0 auto 6px">${Math.round(img.length*.75/1024)}KB`}catch(e){img=null;$("apv").textContent="";toast(e.message||"התמונה לא נתמכת")}};
+$("as").onclick=async()=>{let html;if(tab===1){if(!img)return toast("בחר תמונה, או עבור ללשונית קוד HTML");html=adHtml(img,$("al").value.trim(),$("abg").value)}else html=$("at").value;
+const x=await api("/api/ad","POST",{html});if(x.ok){closeM();reload()}else toast(x.j.error==="forbidden"?"אין הרשאה לערוך פרסומת":"שגיאה (ייתכן שהקובץ גדול מדי)")};
+$("ar").onclick=async()=>{if(!confirm("להסיר את הפרסומת?"))return;const x=await api("/api/ad","POST",{html:""});if(x.ok){closeM();reload()}else toast("שגיאה")}};
 $("th").onclick=()=>{const r=document.documentElement;r.dataset.theme=(r.dataset.theme||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light"))==="dark"?"light":"dark"};
 setInterval(()=>{if(!S.me&&!$("ov").classList.contains("on"))loginM("כדאי להתחבר")},60000);
 $("feed").addEventListener("click",e=>{const i=e.target.closest&&e.target.closest(".bub img");if(!i)return;
