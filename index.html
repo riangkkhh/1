@@ -101,7 +101,7 @@ body.adm #cb{display:block}@media(max-width:900px){#cb{left:0}}
 <div class="grp"><button class="hb" id="th" title="מצב כהה"></button><button class="lg" id="lg"></button></div>
 </header>
 <aside id="ad"><div class="t">פרסומת</div><div id="adc"></div><button class="aed" id="aed"></button></aside>
-<div id="app"><div id="feed"></div></div>
+<div id="app"><div id="feed"><div class="empty">טוען הודעות...</div></div></div>
 <div id="cb">
 <div class="cx" id="cx"></div>
 <div class="tb">
@@ -159,9 +159,9 @@ $("xx").onclick=closeM;if(gsi()){google.accounts.id.renderButton($("gb"),{theme:
 let gInit=false;function gsi(){if(!gInit&&window.google&&google.accounts){google.accounts.id.initialize({client_id:CLIENT_ID,callback:onCred,auto_select:true});gInit=true}return gInit}
 function logout(){S.cred=null;try{localStorage.removeItem("cc")}catch(e){}try{google.accounts.id.disableAutoSelect()}catch(e){}reload()}
 let adShown=null;
-function showAd(){if(adShown===S.ad)return;adShown=S.ad;const c=$("adc");c.innerHTML="";if(!S.ad){c.innerHTML='<div style="padding:30px 10px;text-align:center;color:var(--mu);font-size:13px">כאן יופיע מקום לפרסומת</div>';return}
+function showAd(){if(!ready||adShown===S.ad)return;adShown=S.ad;const c=$("adc");c.innerHTML="";if(!S.ad){c.innerHTML='<div style="padding:30px 10px;text-align:center;color:var(--mu);font-size:13px">כאן יופיע מקום לפרסומת</div>';return}
 const f=document.createElement("iframe");f.setAttribute("sandbox","allow-scripts allow-popups allow-popups-to-escape-sandbox");f.setAttribute("allow","clipboard-write");f.title="פרסומת";f.srcdoc=S.ad;c.appendChild(f)}
-function head(){$("cnt").textContent=S.users;document.body.classList.toggle("adm",S.admin||S.mod);document.querySelectorAll("#cb .tb>*").forEach(el=>el.style.display=S.mod&&!S.admin&&!["who","im","vd"].includes(el.id)?"none":"");
+function head(){$("cnt").textContent=ready?S.users:"…";$("lg").style.visibility=(!ready&&S.cred)?"hidden":"visible";document.body.classList.toggle("adm",!!(S.admin||S.mod));document.querySelectorAll("#cb .tb>*").forEach(el=>el.style.display=S.mod&&!S.admin&&!["who","im","vd"].includes(el.id)?"none":"");
 $("lg").innerHTML=S.me?`${ic("out")} התנתק`:`${ic("user")} התחבר`;$("lg").onclick=()=>{if(S.me)logout();else loginM()};
 $("adm").innerHTML=`${ic("mail")}<span>מנהל:</span> ${S.admin?S.me:"mont.b335@gmail.com"}`;$("th").innerHTML=ic("moon");
 showAd();
