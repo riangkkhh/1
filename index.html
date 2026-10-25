@@ -155,7 +155,7 @@ async function api(p,m,b){const [path,qs]=p.split("?"),body=Object.assign({},b||
 try{const r=await fetch(API+(m==="DELETE"?path+"/delete":path),{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body)});return{ok:r.ok,s:r.status,j:await r.json().catch(()=>({}))}}catch(e){return{ok:false,s:0,j:{},err:String(e)}}}
 let mv="",rv="",ready=false,adv=null;const PAGE=20;
 const reload=()=>load(false);
-function expired(){try{return JSON.parse(atob(S.cred.split(".")[1].replace(/-/g,"+").replace(/_/g,"/"))).exp*1000<Date.now()}catch(e){return true}}
+function expired(){if(S.cred&&S.cred.startsWith("ses_"))return false;try{return JSON.parse(atob(S.cred.split(".")[1].replace(/-/g,"+").replace(/_/g,"/"))).exp*1000<Date.now()}catch(e){return true}}
 function dropCred(){S.cred=null;try{localStorage.removeItem("cc")}catch(e){}try{google.accounts.id.prompt()}catch(e){}}
 async function load(first){if(S.cred&&expired())dropCred();
 const r=await api("/api/feed?limit="+Math.min(Math.max(S.msgs.length,PAGE),200));
@@ -171,16 +171,16 @@ async function older(){const r=await api("/api/feed?limit="+PAGE+"&before="+S.ms
 function clean(h){const d=new DOMParser().parseFromString(h,"text/html");d.querySelectorAll("script,iframe,object,embed,link,meta,base,form,style").forEach(n=>n.remove());d.querySelectorAll("*").forEach(n=>[...n.attributes].forEach(a=>{if(/^on/i.test(a.name)||/^\s*javascript:/i.test(a.value))n.removeAttribute(a.name)}));return d.body.innerHTML}
 const openM=h=>{$("lc").style.maxWidth="";$("lc").style.padding="";$("lc").innerHTML=h;$("ov").classList.add("on")},closeM=()=>$("ov").classList.remove("on");
 $("ov").onclick=e=>{if(e.target.id==="ov")closeM()};
-async function onCred(r){S.cred=r.credential;try{localStorage.setItem("cc",S.cred)}catch(e){}const x=await api("/api/login","POST");if(!x.ok){S.cred=null;try{localStorage.removeItem("cc")}catch(e){}return toast(x.j.error==="blocked"?"החשבון הזה נחסם מהאתר":"ההתחברות נכשלה")}closeM();reload()}
+async function onCred(r){S.cred=r.credential;try{localStorage.setItem("cc",S.cred)}catch(e){}const x=await api("/api/login","POST");if(!x.ok){S.cred=null;try{localStorage.removeItem("cc")}catch(e){}return toast(x.j.error==="blocked"?"החשבון הזה נחסם מהאתר":"ההתחברות נכשלה")}if(x.j.session){S.cred=x.j.session;try{localStorage.setItem("cc",S.cred)}catch(e){}}closeM();reload()}
 function loginM(msg){openM(`<button class="x" id="xx">✕</button><div class="av">${LOGO}</div><h3>${msg||"התחברו כדי להמשיך"}</h3><p>התחברות עם חשבון Google פותחת תמונות, סרטונים, תגובות ושיתוף</p><div id="gb" style="display:flex;justify-content:center;min-height:44px"></div>`);
 $("xx").onclick=closeM;if(gsi()){google.accounts.id.renderButton($("gb"),{theme:"outline",size:"large",locale:"he",width:240})}else $("gb").textContent="טוען..."}
 let gInit=false;function gsi(){if(!gInit&&window.google&&google.accounts){google.accounts.id.initialize({client_id:CLIENT_ID,callback:onCred,auto_select:true});gInit=true}return gInit}
-function logout(){S.cred=null;try{localStorage.removeItem("cc")}catch(e){}try{google.accounts.id.disableAutoSelect()}catch(e){}reload()}
+async function logout(){await api("/api/logout","POST");S.cred=null;try{localStorage.removeItem("cc")}catch(e){}try{google.accounts.id.disableAutoSelect()}catch(e){}reload()}
 let adShown=null;
 function showAd(){if(!ready||adShown===S.ad)return;adShown=S.ad;const c=$("adc");c.innerHTML="";if(!S.ad){c.innerHTML='<div style="padding:30px 10px;text-align:center;color:var(--mu);font-size:13px">כאן יופיע מקום לפרסומת</div>';return}
 const f=document.createElement("iframe");f.setAttribute("sandbox","allow-scripts allow-popups allow-popups-to-escape-sandbox");f.setAttribute("allow","clipboard-write");f.title="פרסומת";f.srcdoc=S.ad;c.appendChild(f)}
 const badge=n=>n>0?`<b class="bd">${n>99?"99+":n}</b>`:"";
-function head(){$("cnt").textContent=ready?S.users:"…";$("lg").style.visibility=(!ready&&S.cred)?"hidden":"visible";document.body.classList.toggle("adm",!!(S.admin||S.mod));document.querySelectorAll("#cb .tb>*").forEach(el=>el.style.display=S.mod&&!S.admin&&el.id==="md"?"none":"");
+function head(){$("cnt").textContent=ready?S.users:"…";$("lg").style.visibility=(!ready&&S.cred)?"hidden":"visible";document.body.classList.toggle("adm",!!(S.admin||S.mod));document.querySelectorAll("#cb .tb>*").forEach(el=>el.style.display="");
 $("lg").innerHTML=S.me?`${ic("out")} התנתק`:`${ic("user")} התחבר`;$("lg").onclick=()=>{if(S.me)logout();else loginM()};
 $("adm").innerHTML=`${ic("mail")}<span>מנהל:</span> ${S.admin?S.me:"mont.b335@gmail.com"}`;$("th").innerHTML=ic("moon");
 showAd();
@@ -197,6 +197,7 @@ f.querySelectorAll(".rx").forEach(x=>x.onclick=()=>react(m.id,x.dataset.e));
 f.querySelector(".addr").onclick=ev=>{ev.stopPropagation();if(!S.me)return loginM("התחברו כדי להגיב");const p=$("pk");p.innerHTML="";EM.forEach(e=>{const x=document.createElement("button");x.textContent=e;x.onclick=()=>{p.classList.remove("on");react(m.id,e)};p.appendChild(x)});const r=ev.currentTarget.getBoundingClientRect();p.classList.add("on");p.style.top=Math.max(90,r.top-p.offsetHeight-8)+"px";p.style.left=Math.max(8,Math.min(r.right-p.offsetWidth,innerWidth-p.offsetWidth-8))+"px"}}
 let eid=null,qt=null;
 const canEdit=m=>S.admin||(S.mod&&m.mine);
+const canDel=canEdit;
 function ctx(){const c=$("cx");c.classList.toggle("on",!!(eid||qt));if(!eid&&!qt){c.innerHTML="";return}
 c.innerHTML=(eid?`${ic("edit")}<b>עריכת הודעה #${eid}</b><span></span>`:`${ic("reply")}<b></b><span></span>`)+`<button title="ביטול">${ic("x")}</button>`;
 if(!eid){c.querySelector("b").textContent="מצטט את "+NAME[qt.w];c.querySelector("span").textContent=qt.text}
@@ -206,7 +207,7 @@ if(S.more){const o=document.createElement("button");o.className="gb";o.style.css
 S.msgs.forEach(m=>{const d=document.createElement("div");d.className="row";d.id="m"+m.id;let b=clean(m.h);
 if(m.locked||/<!--m-->/.test(b))b=b.replace(/<!--m-->/g,"")+LOCK;
 const qh=m.q?`<div class="qt" data-q="${m.q.id}"><div class="qn">${ic("reply")} ${esc(NAME[m.q.w]||"")}</div><div class="qx">${esc(m.q.t||"")}</div></div>`:"";
-d.innerHTML=`<div class="mav">${AV[m.w]}</div><div class="col"><div class="meta"><b>${NAME[m.w]}</b><span>${new Date(m.t).toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"})}</span><span class="pid">#${m.id}</span>${m.edited?'<span class="ed">נערך</span>':""}</div><div class="bw"><div class="ta"><button class="lk" title="העתק קישור">${ic("link")}</button><button class="sh" title="צילום מסך">${ic("cam")}</button>${S.admin||S.mod?`<button class="qb" title="צטט">${ic("reply")}</button>`:`<button class="rp" title="דווח על הפוסט">${ic("flag")}</button>`}${S.admin?`<button class="pn" title="נעץ / בטל נעיצה">${ic("pin")}</button>`:""}${canEdit(m)?`<button class="eb" title="ערוך">${ic("edit")}</button>`:""}${isAdm()?`<button class="dl" title="מחק">${ic("trash")}</button>`:""}</div><div class="bub">${qh}${b}</div></div><div class="foot" id="f${m.id}"></div></div>`;
+d.innerHTML=`<div class="mav">${AV[m.w]}</div><div class="col"><div class="meta"><b>${NAME[m.w]}</b><span>${new Date(m.t).toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"})}</span><span class="pid">#${m.id}</span>${m.edited?'<span class="ed">נערך</span>':""}</div><div class="bw"><div class="ta"><button class="lk" title="העתק קישור">${ic("link")}</button><button class="sh" title="צילום מסך">${ic("cam")}</button>${S.admin||S.mod?`<button class="qb" title="צטט">${ic("reply")}</button>`:`<button class="rp" title="דווח על הפוסט">${ic("flag")}</button>`}${S.admin?`<button class="pn" title="נעץ / בטל נעיצה">${ic("pin")}</button>`:""}${canEdit(m)?`<button class="eb" title="ערוך">${ic("edit")}</button>`:""}${canDel(m)?`<button class="dl" title="מחק">${ic("trash")}</button>`:""}</div><div class="bub">${qh}${b}</div></div><div class="foot" id="f${m.id}"></div></div>`;
 fillFoot(d.querySelector(".foot"),m);const lb=d.querySelector(".lockbtn");if(lb)lb.onclick=()=>loginM();
 d.querySelectorAll(".qt").forEach(x=>x.onclick=()=>goTo(+x.dataset.q));
 const qb=d.querySelector(".qb");if(qb)qb.onclick=()=>{eid=null;const t=document.createElement("div");t.innerHTML=clean(m.h);qt={id:m.id,w:m.w,text:t.textContent.trim().slice(0,120)||"מדיה"};ctx();ed.focus()};
@@ -243,7 +244,7 @@ if(x.size>3.5*1024*1024)return toast("הסרטון גדול מדי (עד 3.5MB).
 const r=new FileReader();r.onload=()=>{ed.focus();document.execCommand("insertHTML",false,`<video controls src="${r.result}"></video>`)};r.readAsDataURL(x)};f.click()}
 $("im").onclick=()=>pick("image");$("vd").onclick=()=>pick("video");
 $("md").onclick=()=>{hm=!hm;$("md").classList.toggle("on",hm);if(hm){$("ht").value=ed.innerHTML;$("ht").style.display="block";ed.style.display="none"}else{ed.innerHTML=clean($("ht").value);$("ht").style.display="none";ed.style.display="block"}};
-$("sd").onclick=async()=>{if(!(S.admin||S.mod)||$("sd").disabled)return;const h=clean(hm&&S.admin?$("ht").value:ed.innerHTML);if(!h.replace(/<[^>]*>|&nbsp;|\s/g,"")&&!/<(img|video)/.test(h))return toast("ההודעה ריקה");
+$("sd").onclick=async()=>{if(!(S.admin||S.mod)||$("sd").disabled)return;const h=clean(hm?$("ht").value:ed.innerHTML);if(!h.replace(/<[^>]*>|&nbsp;|\s/g,"")&&!/<(img|video)/.test(h))return toast("ההודעה ריקה");
 $("sd").disabled=true;toast("שולח...");const x=eid?await api("/api/message/"+eid+"/edit","POST",{who:$("who").value,html:h}):await api("/api/message","POST",{who:$("who").value,html:h,quote_id:qt?qt.id:undefined});$("sd").disabled=false;
 if(!x.ok)return toast(x.j.error==="bad_media"?"תמונה/סרטון גדול מדי או בפורמט לא נתמך":x.j.error==="forbidden"?"אין הרשאה לפעולה הזו":x.s===413?"הקובץ גדול מדי":"שגיאה בשליחה");
 const was=!!eid;eid=null;qt=null;ctx();ed.innerHTML="";$("ht").value="";await reload();if(!was)scrollTo(0,document.body.scrollHeight)};
