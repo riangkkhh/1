@@ -111,11 +111,12 @@ body.adm #cb{display:block}@media(max-width:900px){#cb{left:0}}
 @media(max-width:900px){#pinbar{margin:0;padding:6px 8px 0}}
 .unr{display:flex;align-items:center;gap:10px;font-size:11px;font-weight:800;color:#e02020;margin:4px 0}
 .unr:before,.unr:after{content:"";flex:1;height:1.5px;background:#fecaca}.unr span{background:#fff5f5;border:1px solid #fecaca;border-radius:99px;padding:2px 12px}
+html{overflow-anchor:none}
 </style></head><body>
 <header>
 <img class="hav" src="img/1.png" alt="" style="object-fit:cover">
 <div class="hi"><div class="hn">צ’ארלי גולגולת - <em>ערוץ התוכן והצחוקים הבלעדי</em></div><div class="hd">תוכן סאטירי והומוריסטי • משותף על פי סעיף 27א לחוק זכות יוצרים</div><div class="hs"><span id="cnt">0</span> נרשמו כבר עם גוגל</div></div>
-<span class="chip" id="adm"></span>
+
 <div class="grp"><button class="hb" id="bi" title="תוכן ממשתמשים" style="display:none"></button><button class="hb" id="br" title="דיווחים" style="display:none"></button><button class="hb" id="bk" title="חסימת מיילים" style="display:none"></button><button class="hb" id="bu" title="שליחת תוכן לערוץ"></button><button class="hb" id="bp" title="מדיניות פרטיות"></button><button class="hb" id="th" title="מצב כהה"></button><button class="lg" id="lg"></button></div>
 </header>
 <aside id="ad"><div class="t">פרסומת</div><div id="adc"></div><button class="aed" id="aed"></button></aside>
@@ -169,7 +170,14 @@ if(v.j.mv!==mv)return reload();
 if(v.j.rv!==rv){const r=await api("/api/reactions?ids="+S.msgs.map(m=>m.id).join(","));if(r.ok){rv=v.j.rv;S.msgs.forEach(m=>{m.r=r.j[m.id]||{};const f=$("f"+m.id);if(f)fillFoot(f,m)})}}}
 async function diag(){const o=$("dgo");o.textContent="בודק...\n";const t=[["GET /api/ver","/api/ver"],["GET /api/feed?limit=1","/api/feed?limit=1"],["GET /api/feed?limit=20","/api/feed?limit=20"],["POST /api/login","/api/login","POST"]];
 for(const [n,u,m] of t){try{const r=await fetch(API+u,{method:m||"GET"});o.textContent+=n+" -> "+r.status+"\n"}catch(e){o.textContent+=n+" -> נחסם (לא הגיעה תשובה)\n"}}const z=await api("/api/feed?limit=20");o.textContent+="api() feed -> "+(z.ok?"200":z.s+" "+(z.err||"")+" "+(z.j.error||""))+" | מחובר: "+(S.cred?"כן":"לא")+"\n"}
-async function older(){const r=await api("/api/feed?limit="+PAGE+"&before="+S.msgs[0].id);if(r.ok){S.msgs=r.j.msgs.concat(S.msgs);S.more=r.j.more;render(1)}}
+let olderBusy=false;
+async function older(){if(olderBusy||!S.more||!S.msgs.length)return;olderBusy=true;
+try{const r=await api("/api/feed?limit="+PAGE+"&before="+S.msgs[0].id);
+if(r.ok){const add=r.j.msgs;S.more=r.j.more;S.msgs=add.concat(S.msgs);
+const f=$("feed"),h=document.documentElement.scrollHeight,y=scrollY,fr=document.createDocumentFragment();
+add.forEach(m=>rowFor(m,fr));f.insertBefore(fr,f.firstChild);
+scrollTo(0,y+document.documentElement.scrollHeight-h)}}finally{olderBusy=false}}
+addEventListener("scroll",()=>{if(scrollY<700&&S.more)older()},{passive:true});
 function clean(h){const d=new DOMParser().parseFromString(h,"text/html");d.querySelectorAll("script,iframe,object,embed,link,meta,base,form,style").forEach(n=>n.remove());d.querySelectorAll("*").forEach(n=>[...n.attributes].forEach(a=>{if(/^on/i.test(a.name)||/^\s*javascript:/i.test(a.value))n.removeAttribute(a.name)}));return d.body.innerHTML}
 const openM=h=>{$("lc").style.maxWidth="";$("lc").style.padding="";$("lc").innerHTML=h;$("ov").classList.add("on")},closeM=()=>$("ov").classList.remove("on");
 $("ov").onclick=e=>{if(e.target.id==="ov")closeM()};
@@ -195,7 +203,7 @@ document.addEventListener("visibilitychange",()=>{if(document.hidden)markSeen()}
 const badge=n=>n>0?`<b class="bd">${n>99?"99+":n}</b>`:"";
 function head(){$("cnt").textContent=ready?S.users:"…";$("lg").style.visibility=(!ready&&S.cred)?"hidden":"visible";document.body.classList.toggle("adm",!!(S.admin||S.mod));document.querySelectorAll("#cb .tb>*").forEach(el=>el.style.display="");
 $("lg").innerHTML=S.me?`${ic("out")} התנתק`:`${ic("user")} התחבר`;$("lg").onclick=()=>{if(S.me)logout();else loginM()};
-$("adm").innerHTML=`${ic("mail")}<span>מנהל:</span> ${S.admin?S.me:"mont.b335@gmail.com"}`;$("th").innerHTML=ic("moon");
+$("th").innerHTML=ic("moon");
 showAd();
 $("bp").innerHTML=ic("shield");$("bu").innerHTML=ic("upload");$("bk").innerHTML=ic("ban");
 $("br").innerHTML=ic("flag")+badge(S.nr);$("bi").innerHTML=ic("inbox")+badge(S.ns);
@@ -215,9 +223,7 @@ function ctx(){const c=$("cx");c.classList.toggle("on",!!(eid||qt));if(!eid&&!qt
 c.innerHTML=(eid?`${ic("edit")}<b>עריכת הודעה #${eid}</b><span></span>`:`${ic("reply")}<b></b><span></span>`)+`<button title="ביטול">${ic("x")}</button>`;
 if(!eid){c.querySelector("b").textContent="מצטט את "+NAME[qt.w];c.querySelector("span").textContent=qt.text}
 c.querySelector("button").onclick=()=>{if(eid)ed.innerHTML="";eid=null;qt=null;ctx()}}
-function render(keep){head();const f=$("feed");if(S.err){f.innerHTML=`<div class="empty">${S.err}<br><br><button class="gb" id="rt" style="width:auto;display:inline-flex;padding:8px 18px">נסה שוב</button> <button class="gb" id="dg" style="width:auto;display:inline-flex;padding:8px 18px">בדיקת חיבור</button><pre id="dgo" style="direction:ltr;text-align:left;margin-top:14px;font-size:13px;white-space:pre-wrap"></pre></div>`;$("rt").onclick=()=>load(true);$("dg").onclick=diag;return}if(!S.msgs.length){f.innerHTML='<div class="empty">אין הודעות עדיין</div>';return}f.innerHTML="";
-if(S.more){const o=document.createElement("button");o.className="gb";o.style.cssText="align-self:center;width:auto;padding:8px 18px";o.textContent="טען הודעות ישנות";o.onclick=older;f.appendChild(o)}
-S.msgs.forEach(m=>{const d=document.createElement("div");d.className="row";d.id="m"+m.id;let b=clean(m.h);
+function rowFor(m,f){const d=document.createElement("div");d.className="row";d.id="m"+m.id;let b=clean(m.h);
 if(m.locked||/<!--m-->/.test(b))b=b.replace(/<!--m-->/g,"")+LOCK;
 const qh=m.q?`<div class="qt" data-q="${m.q.id}"><div class="qn">${ic("reply")} ${esc(NAME[m.q.w]||"")}</div><div class="qx">${esc(m.q.t||"")}</div></div>`:"";
 d.innerHTML=`<div class="mav">${AV[m.w]}</div><div class="col"><div class="meta"><b>${NAME[m.w]}</b><span>${new Date(m.t).toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"})}</span><span class="pid">#${m.id}</span>${m.edited?'<span class="ed">נערך</span>':""}</div><div class="bw"><div class="ta"><button class="lk" title="העתק קישור">${ic("link")}</button><button class="sh" title="צילום מסך">${ic("cam")}</button>${S.admin||S.mod?`<button class="qb" title="צטט">${ic("reply")}</button>`:`<button class="rp" title="דווח על הפוסט">${ic("flag")}</button>`}${S.admin?`<button class="pn" title="נעץ / בטל נעיצה">${ic("pin")}</button>`:""}${canEdit(m)?`<button class="eb" title="ערוך">${ic("edit")}</button>`:""}${canDel(m)?`<button class="dl" title="מחק">${ic("trash")}</button>`:""}</div><div class="bub">${qh}${b}</div></div><div class="foot" id="f${m.id}"></div></div>`;
@@ -230,7 +236,9 @@ const pn=d.querySelector(".pn");if(pn)pn.onclick=async()=>{const x=await api("/a
 d.querySelector(".lk").onclick=()=>{const u=location.href.split("#")[0]+"#m"+m.id;(navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast("הקישור הועתק"),()=>{history.replaceState(0,"","#m"+m.id);toast("הקישור בשורת הכתובת")})};
 d.querySelector(".sh").onclick=async()=>{if(!S.me)return loginM("צילום מסך זמין למחוברים בלבד");if(!window.html2canvas)return toast("לא זמין כרגע");const c=await html2canvas(d.querySelector(".bub"),{backgroundColor:null});const a=document.createElement("a");a.href=c.toDataURL();a.download="post-"+m.id+".png";a.click()};
 const dl=d.querySelector(".dl");if(dl)dl.onclick=async()=>{if(!confirm("למחוק את ההודעה?"))return;await api("/api/message/"+m.id,"DELETE");reload()};
-if(S.unr===m.id){const sp=document.createElement("div");sp.id="unr";sp.className="unr";sp.innerHTML="<span>הודעות שלא נקראו</span>";f.appendChild(sp)}f.appendChild(d)});if(!keep)scrollTo(0,document.body.scrollHeight)}
+if(S.unr===m.id){const sp=document.createElement("div");sp.id="unr";sp.className="unr";sp.innerHTML="<span>הודעות שלא נקראו</span>";f.appendChild(sp)}f.appendChild(d)}
+function render(keep){head();const f=$("feed");if(S.err){f.innerHTML=`<div class="empty">${S.err}<br><br><button class="gb" id="rt" style="width:auto;display:inline-flex;padding:8px 18px">נסה שוב</button> <button class="gb" id="dg" style="width:auto;display:inline-flex;padding:8px 18px">בדיקת חיבור</button><pre id="dgo" style="direction:ltr;text-align:left;margin-top:14px;font-size:13px;white-space:pre-wrap"></pre></div>`;$("rt").onclick=()=>load(true);$("dg").onclick=diag;return}if(!S.msgs.length){f.innerHTML='<div class="empty">אין הודעות עדיין</div>';return}f.innerHTML="";
+S.msgs.forEach(m=>rowFor(m,f));if(!keep)scrollTo(0,document.body.scrollHeight)}
 document.addEventListener("click",e=>{if(!e.target.closest("#pk"))$("pk").classList.remove("on")});
 const ed=$("ed");let hm=false;
 [["aR","ar"],["aC","ac"],["aL","al"],["lk","link"],["im","img"],["vd","vid"],["em","emb"]].forEach(([a,b])=>$(a).innerHTML=ic(b));
