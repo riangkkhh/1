@@ -112,6 +112,22 @@ body.adm #cb{display:block}@media(max-width:900px){#cb{left:0}}
 .unr{display:flex;align-items:center;gap:10px;font-size:11px;font-weight:800;color:#e02020;margin:4px 0}
 .unr:before,.unr:after{content:"";flex:1;height:1.5px;background:#fecaca}.unr span{background:#fff5f5;border:1px solid #fecaca;border-radius:99px;padding:2px 12px}
 html{overflow-anchor:none}
+.bub.poll{padding:0;width:min(100%,520px);border:2px solid transparent;border-radius:18px 6px 18px 18px;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(135deg,#1a56db,#7c4dff,#00b4d8) border-box;box-shadow:0 10px 30px rgba(26,86,219,.22);overflow:hidden}
+.pcard{padding:14px 14px 12px}
+.phd{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:var(--ac);margin-bottom:10px}
+.pib{width:28px;height:28px;border-radius:9px;background:linear-gradient(135deg,#1a56db,#7c4dff);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px}
+.phd .pm{margin-right:auto;font-weight:700;color:var(--mu)}.phd .pm.cl{color:#dc2626}
+.pq{font-size:20px;font-weight:800;line-height:1.4;margin-bottom:12px;word-break:break-word}
+.po{position:relative;display:flex;align-items:center;gap:10px;width:100%;padding:11px 12px;margin-bottom:8px;border:1.5px solid var(--bd);border-radius:12px;background:var(--bub);overflow:hidden;text-align:right;font-size:15px;font-weight:600;transition:border-color .15s,transform .1s}
+.po:hover:not(:disabled){border-color:var(--ac);transform:translateY(-1px)}.po.mine{border-color:var(--ac)}.po:disabled{cursor:default}
+.po .pf{position:absolute;top:0;bottom:0;right:0;background:linear-gradient(270deg,rgba(26,86,219,.2),rgba(124,77,255,.16));transition:width .5s ease}
+.po>span:not(.pf){position:relative}
+.pc{width:20px;height:20px;flex:none;border-radius:50%;border:2px solid var(--bd);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px}.pc.sq{border-radius:6px}
+.po.mine .pc{background:var(--ac);border-color:var(--ac)}
+.pt{flex:1;min-width:0;word-break:break-word}.pp{font-size:12px;color:var(--mu);font-weight:700;white-space:nowrap}
+.pft{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--mu);margin-top:4px}.pft .pcls{margin-right:auto}
+.porow{display:flex;gap:6px;align-items:flex-start}.porow .px{width:38px;height:38px;flex:none;border-radius:10px;color:var(--mu);background:var(--bub)}
+.lc input[type=checkbox]{width:auto;margin:0 0 0 8px;padding:0}.chk{display:flex;align-items:center;font-size:14px;margin-bottom:12px}
 </style></head><body>
 <header>
 <img class="hav" src="img/1.png" alt="" style="object-fit:cover">
@@ -130,7 +146,7 @@ html{overflow-anchor:none}
 <select id="fn"><option value="">גופן</option><option>Assistant</option><option>Heebo</option><option>Arial</option><option>Georgia</option><option>Courier New</option></select>
 <input type="color" id="col" value="#1a56db" title="צבע">
 <button id="lk"></button><button id="cd">&lt;/&gt; קוד</button><button id="im"></button><button id="vd"></button><button id="em"></button>
-<button id="md" style="margin-right:auto">HTML</button>
+<button id="pl" title="סקר" style="margin-right:auto;display:none"></button><button id="md">HTML</button>
 </div>
 <input type="file" id="fi" hidden>
 <div class="cm"><div id="ed" contenteditable="true" data-ph="כתוב הודעה..."></div><textarea id="ht" placeholder="<div>HTML מעוצב</div>"></textarea><button class="snd" id="sd" title="שלח"></button></div>
@@ -140,7 +156,7 @@ html{overflow-anchor:none}
 <div id="toast"></div>
 <script>
 const ADMIN="mont.b335@gmail.com";
-const D={shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/>',upload:'<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>',inbox:'<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.1L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.5-6.9A2 2 0 0016.8 4H7.2a2 2 0 00-1.7 1.1z"/>',ban:'<circle cx="12" cy="12" r="10"/><path d="M4.9 4.9l14.2 14.2"/>',pin:'<path d="M12 17v5M9 3h6l-1 7 3 3v2H7v-2l3-3z"/>',flag:'<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/>',reply:'<path d="M9 14L4 9l5-5"/><path d="M20 20v-7a4 4 0 00-4-4H4"/>',x:'<path d="M18 6L6 18M6 6l12 12"/>',lock:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>',send:'<path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/>',link:'<path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/>',img:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>',vid:'<rect x="2" y="5" width="14" height="14" rx="2"/><path d="M22 7l-6 5 6 5z"/>',cam:'<path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/>',user:'<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>',out:'<path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>',mail:'<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/>',al:'<path d="M17 10H3M21 6H3M21 14H3M17 18H3"/>',ac:'<path d="M18 10H6M21 6H3M21 14H3M18 18H6"/>',ar:'<path d="M21 10H7M21 6H3M21 14H3M21 18H7"/>',moon:'<path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/>',edit:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>',trash:'<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>',smile:'<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/>',emb:'<path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/>'};
+const D={chart:'<path d="M18 20V10M12 20V4M6 20v-6"/>',check:'<path d="M5 12l5 5 9-10"/>',shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/>',upload:'<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>',inbox:'<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.1L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.5-6.9A2 2 0 0016.8 4H7.2a2 2 0 00-1.7 1.1z"/>',ban:'<circle cx="12" cy="12" r="10"/><path d="M4.9 4.9l14.2 14.2"/>',pin:'<path d="M12 17v5M9 3h6l-1 7 3 3v2H7v-2l3-3z"/>',flag:'<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/>',reply:'<path d="M9 14L4 9l5-5"/><path d="M20 20v-7a4 4 0 00-4-4H4"/>',x:'<path d="M18 6L6 18M6 6l12 12"/>',lock:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>',send:'<path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/>',link:'<path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/>',img:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>',vid:'<rect x="2" y="5" width="14" height="14" rx="2"/><path d="M22 7l-6 5 6 5z"/>',cam:'<path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/>',user:'<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>',out:'<path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>',mail:'<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/>',al:'<path d="M17 10H3M21 6H3M21 14H3M17 18H3"/>',ac:'<path d="M18 10H6M21 6H3M21 14H3M18 18H6"/>',ar:'<path d="M21 10H7M21 6H3M21 14H3M21 18H7"/>',moon:'<path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/>',edit:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>',trash:'<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>',smile:'<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/>',emb:'<path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/>'};
 const ic=n=>`<svg class="i" viewBox="0 0 24 24">${D[n]}</svg>`,$=id=>document.getElementById(id),esc=v=>String(v).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const EM=["💀","😂","🤣","❤️","👍","🔥","😮","😢","👏","🎉","😍","🥳","😎","🙏","💯","🤯","😭","🤔","👀","💪"];
 const IMGS={charlie:"img/2.png",skull:"img/1.png"};   // נתיבי תמונות הפרופיל - אפשר לשנות כאן
@@ -162,22 +178,27 @@ function expired(){if(S.cred&&S.cred.startsWith("ses_"))return false;try{return 
 function dropCred(){S.cred=null;try{localStorage.removeItem("cc")}catch(e){}try{google.accounts.id.prompt()}catch(e){}}
 async function load(first){if(S.cred&&expired())dropCred();
 const r=await api("/api/feed?limit="+Math.min(Math.max(S.msgs.length,PAGE),200));
-if(!r.ok){if(first||!ready){S.err=r.s?"שגיאת שרת ("+r.s+")":"אין תקשורת עם השרת. ייתכן שהוא חסום ברשת או בסינון שלך";render(1)}return}const j=r.j;ready=true;S.err=null;if(S.cred&&!j.me)dropCred();
+if(!r.ok||!Array.isArray(r.j.msgs)){if(first||!ready){S.err=r.s?"שגיאת שרת ("+r.s+")":"אין תקשורת עם השרת. ייתכן שהוא חסום ברשת או בסינון שלך";render(1)}return}const j=r.j;ready=true;S.err=null;if(S.cred&&!j.me)dropCred();
 if(j.adv!==adv){const a=await api("/api/adget");if(a.ok){S.ad=a.j.ad||"";adv=j.adv}}mv=j.mv;rv=j.rv;S.msgs=j.msgs;S.more=j.more;S.adEd=!!j.adeditor;S.users=j.users;S.me=j.me;S.admin=!!j.admin;S.mod=!!j.mod;S.pin=j.pin;render(!first);if(first)await openAtUnread();else setTimeout(markSeen,400);if(j.replies&&j.replies.length)showReply(j.replies[0]);
 if(first&&location.hash){const t=document.querySelector(location.hash);t&&t.scrollIntoView()}}
 async function poll(){if(!ready)return load(true);if(S.admin||S.mod)loadCounts();if(S.cred&&expired()){dropCred();return reload()}const v=await api("/api/ver");if(!v.ok)return;
 if(v.j.mv!==mv)return reload();
-if(v.j.rv!==rv){const r=await api("/api/reactions?ids="+S.msgs.map(m=>m.id).join(","));if(r.ok){rv=v.j.rv;S.msgs.forEach(m=>{m.r=r.j[m.id]||{};const f=$("f"+m.id);if(f)fillFoot(f,m)})}}}
+if(v.j.rv!==rv){const r=await api("/api/reactions?ids="+S.msgs.map(m=>m.id).join(","));if(r.ok){rv=v.j.rv;S.msgs.forEach(m=>{m.r=r.j[m.id]||{};const f=$("f"+m.id);if(f)fillFoot(f,m)})}
+const pi=S.msgs.filter(m=>m.poll).map(m=>m.id);if(pi.length){const q=await api("/api/polls","POST",{ids:pi.join(",")});if(q.ok)S.msgs.forEach(m=>{if(m.poll&&q.j[m.id]){m.poll=q.j[m.id];const e=$("p"+m.id);if(e)fillPoll(e,m)}})}}}
 async function diag(){const o=$("dgo");o.textContent="בודק...\n";const t=[["GET /api/ver","/api/ver"],["GET /api/feed?limit=1","/api/feed?limit=1"],["GET /api/feed?limit=20","/api/feed?limit=20"],["POST /api/login","/api/login","POST"]];
 for(const [n,u,m] of t){try{const r=await fetch(API+u,{method:m||"GET"});o.textContent+=n+" -> "+r.status+"\n"}catch(e){o.textContent+=n+" -> נחסם (לא הגיעה תשובה)\n"}}const z=await api("/api/feed?limit=20");o.textContent+="api() feed -> "+(z.ok?"200":z.s+" "+(z.err||"")+" "+(z.j.error||""))+" | מחובר: "+(S.cred?"כן":"לא")+"\n"}
 let olderBusy=false;
 async function older(){if(olderBusy||!S.more||!S.msgs.length)return;olderBusy=true;
 try{const r=await api("/api/feed?limit="+PAGE+"&before="+S.msgs[0].id);
-if(r.ok){const add=r.j.msgs;S.more=r.j.more;S.msgs=add.concat(S.msgs);
+if(r.ok){const add=r.j.msgs;S.more=add.length?r.j.more:false;S.msgs=add.concat(S.msgs);
 const f=$("feed"),h=document.documentElement.scrollHeight,y=scrollY,fr=document.createDocumentFragment();
 add.forEach(m=>rowFor(m,fr));f.insertBefore(fr,f.firstChild);
 scrollTo(0,y+document.documentElement.scrollHeight-h)}}finally{olderBusy=false}}
 addEventListener("scroll",()=>{if(scrollY<700&&S.more)older()},{passive:true});
+// אם הדף קצר מדי כדי לגלול (אין אירוע גלילה בכלל), ממשיכים לטעון הודעות ישנות עד שיש מה לגלול
+function fillCheck(){if(S.more&&!olderBusy&&document.documentElement.scrollHeight-innerHeight<800)older().then(()=>setTimeout(fillCheck,50))}
+addEventListener("resize",()=>setTimeout(fillCheck,200));
+
 function clean(h){const d=new DOMParser().parseFromString(h,"text/html");d.querySelectorAll("script,iframe,object,embed,link,meta,base,form,style").forEach(n=>n.remove());d.querySelectorAll("*").forEach(n=>[...n.attributes].forEach(a=>{if(/^on/i.test(a.name)||/^\s*javascript:/i.test(a.value))n.removeAttribute(a.name)}));return d.body.innerHTML}
 const openM=h=>{$("lc").style.maxWidth="";$("lc").style.padding="";$("lc").innerHTML=h;$("ov").classList.add("on")},closeM=()=>$("ov").classList.remove("on");
 $("ov").onclick=e=>{if(e.target.id==="ov")closeM()};
@@ -205,7 +226,7 @@ function head(){$("cnt").textContent=ready?S.users:"…";$("lg").style.visibilit
 $("lg").innerHTML=S.me?`${ic("out")} התנתק`:`${ic("user")} התחבר`;$("lg").onclick=()=>{if(S.me)logout();else loginM()};
 $("th").innerHTML=ic("moon");
 showAd();
-$("bp").innerHTML=ic("shield");$("bu").innerHTML=ic("upload");$("bk").innerHTML=ic("ban");
+$("pl").innerHTML=ic("chart")+" סקר";$("pl").style.display=S.admin?"":"none";$("bp").innerHTML=ic("shield");$("bu").innerHTML=ic("upload");$("bk").innerHTML=ic("ban");
 $("br").innerHTML=ic("flag")+badge(S.nr);$("bi").innerHTML=ic("inbox")+badge(S.ns);
 $("br").style.display=S.admin?"":"none";$("bk").style.display=S.admin?"":"none";$("bi").style.display=(S.admin||S.mod)?"":"none";
 const pb=$("pinbar");if(S.pin){pb.innerHTML=`<div class="pin"><span>${ic("pin")}</span><b>נעוץ</b><span class="pt"></span>${S.admin?`<button class="pu" title="בטל נעיצה">${ic("x")}</button>`:""}</div>`;pb.querySelector(".pt").textContent=S.pin.t;pb.firstChild.onclick=()=>goTo(S.pin.id);
@@ -217,8 +238,8 @@ function fillFoot(f,m){f.innerHTML=EM.filter(e=>m.r&&m.r[e]).map(e=>`<button cla
 f.querySelectorAll(".rx").forEach(x=>x.onclick=()=>react(m.id,x.dataset.e));
 f.querySelector(".addr").onclick=ev=>{ev.stopPropagation();if(!S.me)return loginM("התחברו כדי להגיב");const p=$("pk");p.innerHTML="";EM.forEach(e=>{const x=document.createElement("button");x.textContent=e;x.onclick=()=>{p.classList.remove("on");react(m.id,e)};p.appendChild(x)});const r=ev.currentTarget.getBoundingClientRect();p.classList.add("on");p.style.top=Math.max(90,r.top-p.offsetHeight-8)+"px";p.style.left=Math.max(8,Math.min(r.right-p.offsetWidth,innerWidth-p.offsetWidth-8))+"px"}}
 let eid=null,qt=null;
-const canEdit=m=>S.admin||(S.mod&&m.mine);
-const canDel=canEdit;
+const canDel=m=>S.admin||(S.mod&&m.mine);
+const canEdit=m=>!m.poll&&canDel(m);
 function ctx(){const c=$("cx");c.classList.toggle("on",!!(eid||qt));if(!eid&&!qt){c.innerHTML="";return}
 c.innerHTML=(eid?`${ic("edit")}<b>עריכת הודעה #${eid}</b><span></span>`:`${ic("reply")}<b></b><span></span>`)+`<button title="ביטול">${ic("x")}</button>`;
 if(!eid){c.querySelector("b").textContent="מצטט את "+NAME[qt.w];c.querySelector("span").textContent=qt.text}
@@ -226,8 +247,8 @@ c.querySelector("button").onclick=()=>{if(eid)ed.innerHTML="";eid=null;qt=null;c
 function rowFor(m,f){const d=document.createElement("div");d.className="row";d.id="m"+m.id;let b=clean(m.h);
 if(m.locked||/<!--m-->/.test(b))b=b.replace(/<!--m-->/g,"")+LOCK;
 const qh=m.q?`<div class="qt" data-q="${m.q.id}"><div class="qn">${ic("reply")} ${esc(NAME[m.q.w]||"")}</div><div class="qx">${esc(m.q.t||"")}</div></div>`:"";
-d.innerHTML=`<div class="mav">${AV[m.w]}</div><div class="col"><div class="meta"><b>${NAME[m.w]}</b><span>${new Date(m.t).toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"})}</span><span class="pid">#${m.id}</span>${m.edited?'<span class="ed">נערך</span>':""}</div><div class="bw"><div class="ta"><button class="lk" title="העתק קישור">${ic("link")}</button><button class="sh" title="צילום מסך">${ic("cam")}</button>${S.admin||S.mod?`<button class="qb" title="צטט">${ic("reply")}</button>`:`<button class="rp" title="דווח על הפוסט">${ic("flag")}</button>`}${S.admin?`<button class="pn" title="נעץ / בטל נעיצה">${ic("pin")}</button>`:""}${canEdit(m)?`<button class="eb" title="ערוך">${ic("edit")}</button>`:""}${canDel(m)?`<button class="dl" title="מחק">${ic("trash")}</button>`:""}</div><div class="bub">${qh}${b}</div></div><div class="foot" id="f${m.id}"></div></div>`;
-fillFoot(d.querySelector(".foot"),m);const lb=d.querySelector(".lockbtn");if(lb)lb.onclick=()=>loginM();
+d.innerHTML=`<div class="mav">${AV[m.w]}</div><div class="col"><div class="meta"><b>${NAME[m.w]}</b><span>${new Date(m.t).toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"})}</span><span class="pid">#${m.id}</span>${m.edited?'<span class="ed">נערך</span>':""}</div><div class="bw"><div class="ta"><button class="lk" title="העתק קישור">${ic("link")}</button><button class="sh" title="צילום מסך">${ic("cam")}</button>${S.admin||S.mod?`<button class="qb" title="צטט">${ic("reply")}</button>`:`<button class="rp" title="דווח על הפוסט">${ic("flag")}</button>`}${S.admin?`<button class="pn" title="נעץ / בטל נעיצה">${ic("pin")}</button>`:""}${canEdit(m)?`<button class="eb" title="ערוך">${ic("edit")}</button>`:""}${canDel(m)?`<button class="dl" title="מחק">${ic("trash")}</button>`:""}</div><div class="bub${m.poll?" poll":""}">${m.poll?`<div class="pbox" id="p${m.id}"></div>`:qh+b}</div></div><div class="foot" id="f${m.id}"></div></div>`;
+fillFoot(d.querySelector(".foot"),m);if(m.poll)fillPoll(d.querySelector(".pbox"),m);const lb=d.querySelector(".lockbtn");if(lb)lb.onclick=()=>loginM();
 d.querySelectorAll(".qt").forEach(x=>x.onclick=()=>goTo(+x.dataset.q));
 const qb=d.querySelector(".qb");if(qb)qb.onclick=()=>{eid=null;const t=document.createElement("div");t.innerHTML=clean(m.h);qt={id:m.id,w:m.w,text:t.textContent.trim().slice(0,120)||"מדיה"};ctx();ed.focus()};
 const eb=d.querySelector(".eb");if(eb)eb.onclick=()=>{if(hm)$("md").click();qt=null;eid=m.id;$("who").value=m.w;ed.innerHTML=clean(m.h);ctx();ed.focus();scrollTo(0,document.body.scrollHeight)};
@@ -238,7 +259,7 @@ d.querySelector(".sh").onclick=async()=>{if(!S.me)return loginM("צילום מס
 const dl=d.querySelector(".dl");if(dl)dl.onclick=async()=>{if(!confirm("למחוק את ההודעה?"))return;await api("/api/message/"+m.id,"DELETE");reload()};
 if(S.unr===m.id){const sp=document.createElement("div");sp.id="unr";sp.className="unr";sp.innerHTML="<span>הודעות שלא נקראו</span>";f.appendChild(sp)}f.appendChild(d)}
 function render(keep){head();const f=$("feed");if(S.err){f.innerHTML=`<div class="empty">${S.err}<br><br><button class="gb" id="rt" style="width:auto;display:inline-flex;padding:8px 18px">נסה שוב</button> <button class="gb" id="dg" style="width:auto;display:inline-flex;padding:8px 18px">בדיקת חיבור</button><pre id="dgo" style="direction:ltr;text-align:left;margin-top:14px;font-size:13px;white-space:pre-wrap"></pre></div>`;$("rt").onclick=()=>load(true);$("dg").onclick=diag;return}if(!S.msgs.length){f.innerHTML='<div class="empty">אין הודעות עדיין</div>';return}f.innerHTML="";
-S.msgs.forEach(m=>rowFor(m,f));if(!keep)scrollTo(0,document.body.scrollHeight)}
+S.msgs.forEach(m=>rowFor(m,f));if(!keep)scrollTo(0,document.body.scrollHeight);setTimeout(fillCheck,100)}
 document.addEventListener("click",e=>{if(!e.target.closest("#pk"))$("pk").classList.remove("on")});
 const ed=$("ed");let hm=false;
 [["aR","ar"],["aC","ac"],["aL","al"],["lk","link"],["im","img"],["vd","vid"],["em","emb"]].forEach(([a,b])=>$(a).innerHTML=ic(b));
@@ -331,6 +352,26 @@ mdl(`<button class="x" id="xx">✕</button><h3>תכנים ממשתמשים</h3>`
 $("lc").querySelectorAll(".sub").forEach(el=>{const id=+el.dataset.id;
 el.querySelector(".ps").onclick=async()=>{const y=await api("/api/sub/post","POST",{id,who:el.querySelector(".who2").value});if(y.ok){toast("נשלח לערוץ");reload();openSubs()}else toast("שגיאה")};
 el.querySelector(".ds").onclick=async()=>{if(!confirm("למחוק את התוכן?"))return;await api("/api/sub/delete","POST",{id});openSubs()}})}
+
+function fillPoll(el,m){const p=m.poll,tot=p.voters;
+el.innerHTML=`<div class="pcard"><div class="phd"><span class="pib">${ic("chart")}</span><span>סקר</span><span class="pm${p.closed?" cl":""}">${p.closed?"הסקר נסגר":p.multi?"אפשר לבחור כמה תשובות":"בחירה אחת"}</span></div><div class="pq">${esc(p.q)}</div>${p.opts.map((o,i)=>{const pc=tot?Math.min(100,Math.round(o.n/tot*100)):0,mine=p.mine.includes(i);return `<button class="po${mine?" mine":""}" data-i="${i}"${p.closed?" disabled":""}><span class="pf" style="width:${pc}%"></span><span class="pc${p.multi?" sq":""}">${mine?ic("check"):""}</span><span class="pt">${esc(o.t)}</span><span class="pp">${pc}% · ${o.n}</span></button>`}).join("")}<div class="pft"><span>${tot} ${tot===1?"משתתף":"משתתפים"}</span>${!S.me&&!p.closed?"<span>· התחברו כדי להצביע</span>":""}${S.admin&&!p.closed?`<button class="btn2 d pcls">סגירת הסקר</button>`:""}</div></div>`;
+el.querySelectorAll(".po").forEach(b=>b.onclick=()=>votePoll(m,+b.dataset.i,el));
+const c=el.querySelector(".pcls");if(c)c.onclick=async()=>{if(!confirm("לסגור את הסקר? לא יהיה אפשר להצביע יותר."))return;const x=await api("/api/poll/close","POST",{id:p.id});if(x.ok)reload();else toast("שגיאה")}}
+async function votePoll(m,i,el){const p=m.poll;if(!S.me)return loginM("התחברו כדי להצביע");if(p.closed||el._busy)return;el._busy=true;
+try{const sel=p.multi?(p.mine.includes(i)?p.mine.filter(v=>v!==i):[...p.mine,i]):(p.mine.includes(i)?[]:[i]);
+const x=await api("/api/poll/vote","POST",{poll_id:p.id,opts:sel});
+if(x.ok&&x.j.poll){m.poll=x.j.poll;fillPoll(el,m)}else toast(x.j.error==="closed"?"הסקר נסגר":"שגיאה בהצבעה")}finally{el._busy=false}}
+function openPollMaker(){if(!S.admin)return;const opts=["",""];
+mdl(`<button class="x" id="xx">✕</button><h3>סקר חדש</h3><input id="pq" placeholder="השאלה" maxlength="200" style="direction:rtl"><div id="pls"></div><button class="btn2 g" id="pad" type="button" style="margin:0 0 12px">+ הוספת אפשרות</button><label class="chk"><input type="checkbox" id="pm"> אפשר לבחור כמה תשובות</label><select id="pw" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--bd);background:var(--inp);color:var(--tx);font:inherit;margin-bottom:12px"><option value="charlie">פרסום בשם: צ’ארלי</option><option value="skull">פרסום בשם: גולגולת</option></select><button class="gb" id="psd">פרסום הסקר</button>`,"460px");
+$("pw").value=$("who").value;
+const draw=()=>{$("pls").innerHTML=opts.map((v,i)=>`<div class="porow"><input class="pi" data-i="${i}" placeholder="אפשרות ${i+1}" maxlength="80" value="${esc(v)}" style="direction:rtl">${opts.length>2?`<button class="px" data-i="${i}" type="button" title="הסרה">${ic("x")}</button>`:""}</div>`).join("");
+$("pls").querySelectorAll(".pi").forEach(e=>e.oninput=()=>{opts[+e.dataset.i]=e.value});
+$("pls").querySelectorAll(".px").forEach(b=>b.onclick=()=>{opts.splice(+b.dataset.i,1);draw()});$("pad").style.display=opts.length>=10?"none":""};
+draw();$("pad").onclick=()=>{if(opts.length<10){opts.push("");draw();const l=$("pls").querySelectorAll(".pi");l[l.length-1].focus()}};
+$("psd").onclick=async()=>{const q=$("pq").value.trim(),o=opts.map(v=>v.trim()).filter(Boolean);if(!q)return toast("כתוב שאלה");if(new Set(o.map(v=>v.toLowerCase())).size<2)return toast("צריך לפחות שתי אפשרויות שונות");
+$("psd").disabled=true;const x=await api("/api/poll","POST",{q,opts:o,multi:$("pm").checked,who:$("pw").value});$("psd").disabled=false;
+if(x.ok){closeM();await reload();scrollTo(0,document.body.scrollHeight)}else toast(x.j.error==="forbidden"?"רק המנהל הראשי יכול לשלוח סקר":"שגיאה ביצירת הסקר")}}
+$("pl").onclick=openPollMaker;
 $("bp").onclick=()=>mdl(POLICY,"560px");$("bu").onclick=openSubmit;$("br").onclick=openReports;$("bk").onclick=openBlocks;$("bi").onclick=openSubs;
 head();load(true);setInterval(poll,8000);
 addEventListener("load",gsi);
