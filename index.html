@@ -131,6 +131,7 @@ html{overflow-anchor:none}
 body.bgon::before{content:"";position:fixed;inset:0;z-index:-1;background:var(--bgimg) center/cover no-repeat}
 body.bgon::after{content:"";position:fixed;inset:0;z-index:-1;background:color-mix(in srgb,var(--bg) 40%,transparent)}
 .qth{width:48px;height:48px;flex:none;border-radius:10px;overflow:hidden;background:var(--card);display:flex;align-items:center;justify-content:center;color:var(--mu);font-size:20px}.qth img{width:100%;height:100%;object-fit:cover}
+.dz{border:2px dashed var(--bd);border-radius:14px;padding:14px;text-align:center;transition:.15s;margin-bottom:10px}.dz-on{border-color:var(--ac);background:var(--acs)}.dzt{font-size:13px;color:var(--mu);margin-bottom:8px;font-weight:700}
 </style></head><body>
 <header>
 <img class="hav" src="img/1.png" alt="" style="object-fit:cover">
@@ -376,6 +377,12 @@ $("psd").disabled=true;const x=await api("/api/poll","POST",{q,opts:o,multi:$("p
 if(x.ok){closeM();await reload();scrollTo(0,document.body.scrollHeight)}else toast(x.j.error==="forbidden"?"רק המנהל הראשי יכול לשלוח סקר":"שגיאה ביצירת הסקר")}}
 $("pl").onclick=openPollMaker;
 
+function dropZone(el,fn){if(!el)return;let c=0;const on=v=>el.classList.toggle("dz-on",v);
+el.addEventListener("dragenter",e=>{e.preventDefault();c++;on(true)});
+el.addEventListener("dragover",e=>{e.preventDefault()});
+el.addEventListener("dragleave",()=>{if(--c<=0){c=0;on(false)}});
+el.addEventListener("drop",e=>{e.preventDefault();c=0;on(false);fn([...((e.dataTransfer&&e.dataTransfer.files)||[])])})}
+addEventListener("dragover",e=>{if($("ov").classList.contains("on"))e.preventDefault()});addEventListener("drop",e=>{if($("ov").classList.contains("on"))e.preventDefault()});
 const bgOff=()=>{try{return localStorage.getItem("bgoff")==="1"}catch(e){return false}};
 function applyBg(){const on=!!S.bg&&!bgOff();document.body.classList.toggle("bgon",on);if(on)document.body.style.setProperty("--bgimg",`url("${S.bg}")`);else document.body.style.removeProperty("--bgimg")}
 async function loadBg(v){bgv=v;if(!v||v==="0"){S.bg="";applyBg();return}
@@ -387,24 +394,29 @@ for(let k=0;k<8;k++){c.width=Math.max(1,Math.round(im.width*sc));c.height=Math.m
 if(out.length>=650000)throw new Error("התמונה גדולה מדי");return out}finally{URL.revokeObjectURL(u)}}
 async function thumbOf(file){const u=URL.createObjectURL(file);try{const im=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=()=>no();i.src=u});const sc=Math.min(1,96/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.max(1,Math.round(im.width*sc));c.height=Math.max(1,Math.round(im.height*sc));c.getContext("2d").drawImage(im,0,0,c.width,c.height);return c.toDataURL("image/jpeg",.6)}catch(e){return null}finally{URL.revokeObjectURL(u)}}
 function openBg(){const ext=S.bg.startsWith("data:image/png")?"png":S.bg.startsWith("data:image/webp")?"webp":"jpg";
-mdl(`<button class="x" id="xx">✕</button><h3>תמונת רקע</h3>`+(S.bg?`<img src="${S.bg}" style="max-width:100%;max-height:200px;border-radius:12px;display:block;margin:0 auto 12px"><label class="chk"><input type="checkbox" id="bgt"${bgOff()?"":" checked"}> החלת תמונת הרקע אצלי</label><a class="gb" href="${S.bg}" download="charlie-background.${ext}" style="text-decoration:none">${ic("dl")} הורדת התמונה</a>`:"<p>עדיין לא הוגדרה תמונת רקע.</p>")+(S.admin?`<div style="margin-top:14px;border-top:1px solid var(--bd);padding-top:14px"><input type="file" id="bgf" accept="image/*" hidden><button class="gb" id="bgs">${ic("upload")} ${S.bg?"החלפת":"העלאת"} תמונת רקע</button>${S.bg?`<button class="gb" id="bgr" style="margin-top:8px;background:transparent;color:#dc2626;border:0">הסרת הרקע</button>`:""}</div>`:""),"420px");
+mdl(`<button class="x" id="xx">✕</button><h3>תמונת רקע</h3>`+(S.bg?`<img src="${S.bg}" style="max-width:100%;max-height:200px;border-radius:12px;display:block;margin:0 auto 12px"><label class="chk"><input type="checkbox" id="bgt"${bgOff()?"":" checked"}> החלת תמונת הרקע אצלי</label><a class="gb" href="${S.bg}" download="charlie-background.${ext}" style="text-decoration:none">${ic("dl")} הורדת התמונה</a>`:"<p>עדיין לא הוגדרה תמונת רקע.</p>")+(S.admin?`<div style="margin-top:14px;border-top:1px solid var(--bd);padding-top:14px"><div class="dz" id="bgz"><div class="dzt">גררו לכאן תמונה</div><input type="file" id="bgf" accept="image/*" hidden><button class="gb" id="bgs">${ic("upload")} ${S.bg?"החלפת":"העלאת"} תמונת רקע</button></div>${S.bg?`<button class="gb" id="bgr" style="margin-top:8px;background:transparent;color:#dc2626;border:0">הסרת הרקע</button>`:""}</div>`:""),"420px");
 const bt=$("bgt");if(bt)bt.onchange=()=>{try{localStorage.setItem("bgoff",bt.checked?"0":"1")}catch(e){}applyBg()};
 const setBg=async data=>{const x=await api("/api/bg/set","POST",{data});if(x.ok){S.bg=data;try{localStorage.removeItem("bgc")}catch(e){}applyBg();closeM();reload()}else toast(x.j.error==="bad_media"?"התמונה לא נתמכת או גדולה מדי":"שגיאה")};
-if(S.admin){$("bgs").onclick=()=>$("bgf").click();$("bgf").onchange=async()=>{const f=$("bgf").files[0];$("bgf").value="";if(!f)return;toast("מעבד תמונה...");try{await setBg(await shrinkBg(f))}catch(e){toast(e.message||"התמונה לא נתמכת")}};
+if(S.admin){$("bgs").onclick=()=>$("bgf").click();const bgUpload=async f=>{toast("מעבד תמונה...");try{await setBg(await shrinkBg(f))}catch(e){toast(e.message||"התמונה לא נתמכת")}};
+$("bgf").onchange=()=>{const f=$("bgf").files[0];$("bgf").value="";if(f)bgUpload(f)};
+dropZone($("bgz"),fs=>{const f=fs.find(x=>x.type.startsWith("image/"));if(f)bgUpload(f);else toast("גררו קובץ תמונה")});
 const rm=$("bgr");if(rm)rm.onclick=()=>{if(confirm("להסיר את תמונת הרקע?"))setBg("")}}}
 const whenT=t=>t?new Date(t*1000).toLocaleString("he-IL",{dateStyle:"short",timeStyle:"short"}):"—";
 async function openQueue(){const r=await api("/api/queue","POST");if(!r.ok)return toast("שגיאה");const Q=r.j;S.nq=Q.items.length;head();
 mdl(`<button class="x" id="xx">✕</button><h3>תור פרסום אוטומטי</h3><p>נשלחת הודעה אחת בכל שעה, לפי הסדר. הפרסום קורה כשמישהו פותח את האתר.</p><div class="rep"><div><b>${Q.items.length}</b> פריטים בתור (עד ${Q.max})</div><div class="m" style="direction:rtl;text-align:right">${Q.paused?"הפרסום מושהה":Q.items.length?"הפרסום הבא: "+whenT(Q.next_at):"התור ריק"}</div><div class="row2"><button class="btn2 g" id="qp">${Q.paused?"המשך פרסום":"השהיית הפרסום"}</button></div></div>
-<input type="file" id="qf" accept="image/*,video/mp4,video/webm" multiple hidden><div class="row2" style="margin-bottom:10px"><select id="qw" style="padding:8px;border-radius:10px;border:1px solid var(--bd);background:var(--inp);color:var(--tx);font:inherit"><option value="charlie">בשם: צ’ארלי</option><option value="skull">בשם: גולגולת</option></select><button class="btn2" id="qa">${ic("upload")} הוספת תמונות / סרטונים</button></div>
+<input type="file" id="qf" accept="image/*,video/mp4,video/webm" multiple hidden><div class="dz" id="qz"><div class="dzt">גררו לכאן תמונות וסרטונים (אפשר כמה יחד)</div><div class="row2" style="margin-bottom:0;justify-content:center"><select id="qw" style="padding:8px;border-radius:10px;border:1px solid var(--bd);background:var(--inp);color:var(--tx);font:inherit"><option value="charlie">בשם: צ’ארלי</option><option value="skull">בשם: גולגולת</option></select><button class="btn2" id="qa">${ic("upload")} הוספת תמונות / סרטונים</button></div></div>
 <textarea id="qt" rows="3" placeholder="או כתוב הודעת טקסט להוספה לתור" style="direction:rtl"></textarea><button class="gb" id="qtx">הוספת הודעת טקסט לתור</button><div id="qs" style="font-size:12px;color:var(--mu);margin:8px 0;min-height:16px"></div>
 <div>`+Q.items.map((i,n)=>`<div class="rep qi" data-id="${i.id}" style="display:flex;gap:10px;align-items:center;padding:8px"><div class="qth">${i.thumb?`<img src="${i.thumb}" alt="">`:i.kind==="video"?ic("vid"):ic("edit")}</div><div style="flex:1;min-width:0"><b>${n+1}. ${i.kind==="image"?"תמונה":i.kind==="video"?"סרטון":"הודעה"}</b> · ${esc(NAME[i.who]||"")}<div class="m" style="direction:rtl;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(i.snip||"")}</div></div><button class="btn2 g qsn">שלח עכשיו</button><button class="btn2 d qdl">מחיקה</button></div>`).join("")+`</div>`,"560px");
 $("qp").onclick=async()=>{const x=await api("/api/queue/pause","POST",{paused:!Q.paused});if(x.ok)openQueue();else toast("שגיאה")};
 $("qa").onclick=()=>$("qf").click();
-$("qf").onchange=async()=>{const files=[...$("qf").files];$("qf").value="";let n=0;
+let qBusy=false;
+const qUpload=async files=>{if(qBusy||!files.length)return;qBusy=true;let n=0;
 for(const f of files){$("qs").textContent=`מעלה ${++n} מתוך ${files.length}...`;
 try{let html,thumb=null;if(f.type.startsWith("image/")){html=`<img src="${await shrink(f)}">`;thumb=await thumbOf(f)}else if(/^video\/(mp4|webm)$/.test(f.type)){if(f.size>3.5*1024*1024)throw new Error(f.name+": גדול מדי (עד 3.5MB)");html=`<video controls src="${await rd(f)}"></video>`}else throw new Error(f.name+": סוג קובץ לא נתמך");
 const x=await api("/api/queue/add","POST",{who:$("qw").value,html,thumb});if(!x.ok)throw new Error(x.j.error==="full"?"התור מלא":"שגיאה בהעלאה")}catch(e){toast(e.message||"שגיאה");break}}
-openQueue()};
+qBusy=false;openQueue()};
+$("qf").onchange=()=>{const fs=[...$("qf").files];$("qf").value="";qUpload(fs)};
+dropZone($("qz"),qUpload);
 $("qtx").onclick=async()=>{const t=$("qt").value.trim();if(!t)return toast("כתוב הודעה");const x=await api("/api/queue/add","POST",{who:$("qw").value,html:"<div>"+esc(t).replace(/\n/g,"<br>")+"</div>"});if(x.ok)openQueue();else toast(x.j.error==="full"?"התור מלא":"שגיאה")};
 $("lc").querySelectorAll(".qi").forEach(el=>{const id=+el.dataset.id;
 el.querySelector(".qsn").onclick=async()=>{const x=await api("/api/queue/send","POST",{id});if(x.ok){toast("נשלח לערוץ");reload();openQueue()}else toast("שגיאה")};
